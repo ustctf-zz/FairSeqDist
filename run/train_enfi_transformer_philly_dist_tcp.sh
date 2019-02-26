@@ -209,17 +209,21 @@ if [ "$OMPI_COMM_WORLD_RANK" = "0" ]; then
 		ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'>${DistFilename}
 		MASTER_IP=${THIS_IP}
 		echo "I am master node with IP" ${THIS_IP}
+		while [ ! -f ${DistFilename} ]
+		do
+			echo "I am master node, sleep another 5 seconds"
+			sleep 5
+		done
 		sleep 5
 		echo "Files in Full Save Dir"
 		ls -alh ${FullSaveDir}
 else
-		sleep 25
+		while [ ! -f ${DistFilename} ]
+		do
+			echo "I am slave node, sleep another 5 seconds" ${THIS_IP}
+			sleep 5
+		done
 		MASTER_IP="`cat ${DistFilename}`"
-		#if [[ ${MASTER_IP} =~ 1* ]]; then
-		#	echo "Sleep again" ${MASTER_IP}
-		#	sleep 10
-		#	MASTER_IP="`cat ${DistFilename}`"
-		#fi
 		echo "I am slave node with IP" ${THIS_IP} 
 		echo "my master IP" ${MASTER_IP}
 fi	

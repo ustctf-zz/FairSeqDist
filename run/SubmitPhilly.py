@@ -68,8 +68,8 @@ def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, lo
 def submit():
 
     '''Distributed config'''
-    world_size = 2 #number of machines you need
-    ngpupernode = 4 #number of gpus you need on each machine
+    world_size = 4 #number of machines you need
+    ngpupernode = 2 #number of gpus you need on each machine
     old_docker = False #better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
     nccl = False #better not change
     vc = "msrmt" #vc you run your jobs
