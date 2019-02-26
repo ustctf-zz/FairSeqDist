@@ -29,7 +29,9 @@ I have not tested whether this code/script could support single node jobs.
 
 I have not tested the support of Blob.
 
-Philly is in stable. If you encounter exeptions in running this code, please tell me the job link and I will have a check.
+Philly is in stable. If you encounter exeptions in running this code, please tell me the job link and I will help you check.
+
+**Please submit 8-card jobs currently, for the sake of better efficiency.**
 
 # What I am doing
 
