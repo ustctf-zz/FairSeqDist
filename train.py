@@ -410,7 +410,6 @@ def distributed_main(i, args):
 
 def cli_main():
 
-    print(os.environ)
     parser = options.get_training_parser()
     args = options.parse_args_and_arch(parser)
 
@@ -420,18 +419,7 @@ def cli_main():
     if args.distributed_init_method is not None:
         # distributed training
         if args.philly_vc is not None and not "tcp" in args.distributed_init_method:
-            args.distributed_rank = int(os.environ['RANK'])
-            args.distributed_world_size = int(os.environ['WORLD_SIZE'])
-            time.sleep(int(os.environ['OMPI_COMM_WORLD_RANK']))
-            #args.device_id = (int(os.environ['LOCAL_PROCESS_RANK']))
-            args.device_id = args.distributed_rank % torch.cuda.device_count()
-            args.distributed_init_method = "file://{}".format(args.distributed_init_method) #Currently hard-cored here
-            args.distributed_world_size = int(os.environ['WORLD_SIZE'])
-            print(
-                'Dist On Philly, DistRank {}, DistWorldSize {}, Device Id {}'.format(args.distributed_rank, args.distributed_world_size,
-                                                                     args.device_id))
-            if args.wait_time_saving_ckpts == 0:
-                args.wait_time_saving_ckpts = 30
+            distributed_utils.setup_init_philly_shared_system(args)
 
         distributed_main(args.device_id, args)
 

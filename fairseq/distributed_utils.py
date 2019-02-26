@@ -29,9 +29,13 @@ def infer_init_method(args):
     if all(key in os.environ for key in [
         'MASTER_ADDR', 'MASTER_PORT', 'WORLD_SIZE', 'RANK'
     ]):
-        if (os.environ['MASTER_ADDR'].isspace() or not os.environ['MASTER_ADDR']) and args.master_address_file is not None:
-            os.environ['MASTER_ADDR'] = open(args.master_address_file, 'r').read().strip()
-            print('Warning: empty master address, set to {}'.format(os.environ['MASTER_ADDR']))
+        if (not os.environ['MASTER_ADDR'] or os.environ['MASTER_ADDR'].isspace()):
+            print('| WARNING: master addr unknown')
+            if os.path.isfile(args.master_address_file):
+                os.environ['MASTER_ADDR'] = open(args.master_address_file, 'r').read().strip()
+                print('Set it to {}'.format(os.environ['MASTER_ADDR']))
+            else:
+                raise FileNotFoundError('File {} not found'.format(args.master_address_file))
         args.distributed_init_method = 'tcp://{addr}:{port}'.format(
             addr=os.environ['MASTER_ADDR'],
             port=os.environ['MASTER_PORT'],
@@ -54,6 +58,21 @@ def infer_init_method(args):
                 raise e
             except FileNotFoundError:  # Slurm is not installed
                 pass
+
+def setup_init_philly_shared_system(args):
+
+    args.distributed_rank = int(os.environ['RANK'])
+    args.distributed_world_size = int(os.environ['WORLD_SIZE'])
+    import time
+    time.sleep(int(os.environ['OMPI_COMM_WORLD_RANK']))
+    # args.device_id = (int(os.environ['LOCAL_PROCESS_RANK']))
+    args.device_id = args.distributed_rank % torch.cuda.device_count()
+    args.distributed_init_method = "file://{}".format(args.distributed_init_method)  # Currently hard-cored here
+    args.distributed_world_size = int(os.environ['WORLD_SIZE'])
+    print(
+        'Dist On Philly, DistRank {}, DistWorldSize {}, Device Id {}'.format(args.distributed_rank,
+                                                                             args.distributed_world_size,
+                                                                             args.device_id))
 
 def distributed_init(args):
     if args.distributed_world_size == 1:

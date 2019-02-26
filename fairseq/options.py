@@ -271,8 +271,6 @@ def add_distributed_training_args(parser):
                        help='don\'t shuffle batches between GPUs; this reduces overall '
                             'randomness and may affect precision but avoids the cost of '
                             're-reading the data')
-    group.add_argument('--wait-time-saving-ckpts', default=0, type=int,
-                       help='how many seconds to wait in saving model ckpts (at non master process)')
     # fmt: on
     return group
 

@@ -224,7 +224,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
 	--nnodes=${Nnodes} --node_rank=${OMPI_COMM_WORLD_RANK} --master_addr=${MASTER_IP} \
     --master_port=${PORT} \
 	${ProjectDir}/train.py \
-	--ddp-backend ${DdpBackend} --philly-vc ${PHILLY_VC} \
+	--ddp-backend ${DdpBackend} \
 	${FP16Args} \
 	${DataDir}/${Dataset} \
     --arch ${Arch} \
