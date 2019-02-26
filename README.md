@@ -31,6 +31,6 @@ I have not tested the support of Blob.
 
 Philly is in stable. If you encounter exeptions in running this code, please tell me the job link and I will have a check.
 
-#What I am doing
+# What I am doing
 
 Currently if the `actural batch size` is enlarged (e.g., by maintaining the same `max_tokens` and `update_freq` with the single node job), accompanied with a larger learning rate, the training is instable. See the output of this job: https://philly/#/logs/wu2/msrmt/fetia/1549581441265_7399/stdout/latest/ns. I'm trying to solve this.
