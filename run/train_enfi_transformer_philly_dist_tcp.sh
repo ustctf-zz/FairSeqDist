@@ -33,6 +33,7 @@ SaveIntervalUpdates=10000
 enc=6
 dec=6
 PORT=1234
+WarmUpdates=4000
 
 Generate="false"
 
@@ -76,6 +77,10 @@ while [ "$1" != "" ]; do
 		--max-update )
 			shift
 			max_update=$1
+			;;
+		--warm-update )
+			shift
+			WarmUpdates=$1
 			;;
 		--ec | --epoch-checkpoints )
 			no_epoch_checkpoints=""
@@ -233,7 +238,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --max-update ${max_update} \
     --optimizer adam --adam-betas "(0.9, 0.98)" --clip-norm 0.0 \
     --update-freq ${UpdateFreq} \
-    --lr-scheduler inverse_sqrt --warmup-init-lr 1e-07 --warmup-updates 4000 --lr ${LR} --min-lr 1e-09 \
+    --lr-scheduler inverse_sqrt --warmup-init-lr 1e-07 --warmup-updates ${WarmUpdates} --lr ${LR} --min-lr 1e-09 \
     --weight-decay 0.0 --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
     --max-tokens ${MaxTokens} \
     --no-progress-bar \

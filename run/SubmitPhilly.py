@@ -21,11 +21,9 @@ hdfs_mapping={'eu1':'gfs',
             }
 
 
-def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 3277, uf = 40):
+def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 3277, uf = 40, lr = 0.0005, warm_updates = 4000):
 
     ngpus = nprocs * nnodes
-    lr = 0.0005 * ngpus / 4
-    lr = 0.0005
 
     job={
     "ClusterId": cluster,
@@ -46,8 +44,8 @@ def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, lo
     "RackId": "anyConnected",
     "MinGPUs": ngpus,
     "PrevModelPath": None,
-    'ExtraParams':"--dataset wmt19.tokenized.fi-en -M {} --uf {} -E Dist{}x{}_uf4 --nodes {} --port 1678 --nproc {} -A transformer_wmt_en_de_big  -LR {} -SI 1 --max-update 100000 -SIU 0 --enc 6 --dec 6 -LI {} {}".
-        format(max_toks, uf, nnodes, nprocs, nnodes, nprocs, lr, log_interval, "--nccl" if nccl else ""),
+    'ExtraParams':"--dataset wmt19.tokenized.fi-en --warm-update {} -M {} --uf {} -E Dist{}x{}_uf4 --nodes {} --port 1326 --nproc {} -A transformer_wmt_en_de_big  -LR {} -SI 1 --max-update 100000 -SIU 0 --enc 6 --dec 6 -LI {} {}".
+        format(warm_updates, max_toks, uf, nnodes, nprocs, nnodes, nprocs, lr, log_interval, "--nccl" if nccl else ""),
     "SubmitCode": "p",
     "IsMemCheck": False,
     "IsCrossRack": False,
@@ -69,26 +67,25 @@ def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, lo
 
 def submit():
 
+    '''Distributed config'''
+    world_size = 2 #number of machines you need
+    ngpupernode = 4 #number of gpus you need on each machine
+    old_docker = False #better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
+    nccl = False #better not change
+    vc = "msrmt" #vc you run your jobs
+    cluster = "wu2" #cluster you run your jobs
 
-    # upload_code(main_script, cluster, env)
-    # upload_code('utils.py', cluster, env)
-    # upload_code('-r models', cluster, env)
-
-    world_size = 2
-    ngpupernode = 4
-    old_docker = False
-    nccl = False
-    log_interval = 5
-    vc = "msrmt"
-    cluster = "wu2"
-
+    '''Training config'''
     max_toks = 4096 if vc == "msrmt" else 1536
     uf = 32 if vc == "msrmt" else 86
+    lr = 0.001
+    warm_updates = 8000
+    log_interval = 5
 
-    uf = 4
-    expname = 'Vf{}x{}e_1.0_0.25uf'.format(world_size, ngpupernode)
+    expname = 'Df{}x{}e_1.0_warm8'.format(world_size, ngpupernode)
 
-    post(vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl, log_interval= log_interval, max_toks= max_toks, uf= uf)
+    post(vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
+         log_interval= log_interval, max_toks= max_toks, uf= uf, lr = lr, warm_updates= warm_updates)
 
 
 if __name__=='__main__':
