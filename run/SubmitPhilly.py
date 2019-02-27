@@ -90,7 +90,7 @@ def submit():
     arch = "Transformer_wmt_en_de_t2t"
     layers = 10
 
-    expname = 'bfettt10_same{}x{}'.format(world_size, ngpupernode)
+    expname = 'beft_20_lb'.format(world_size, ngpupernode)
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
          log_interval= log_interval, max_toks= max_toks, uf= uf, lr = lr, warm_updates= warm_updates, arch= arch, layers = layers)

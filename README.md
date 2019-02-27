@@ -31,7 +31,7 @@ I have not tested the support of Blob.
 
 Philly is instable. If you encounter exeptions in running this code, please tell me the job link and I will help you check.
 
-*Please use distributed version only for the most promising setting, but not for exploring all kinds of hyperparameters.*
+**Please use distributed version only for the most promising setting, but not for exploring all kinds of hyperparameters.**
 
 **Please submit 8-card jobs currently if your are running 6-6 layer jobs, for the sake of better efficiency.**
 

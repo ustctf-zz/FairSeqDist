@@ -108,3 +108,5 @@ ENV/
 
 # Generated files
 fairseq/temporal_convolution_tbc
+
+.train_hack.py
