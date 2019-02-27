@@ -21,7 +21,7 @@ Single node job: https://philly/#/job/wu2/msrmt/1549581441265_5735, actural batc
 4 nodes job: https://philly/#/job/wu2/msrmt/1549581441265_7512, actural batch size = 4 * 4 * 3277 * 10
 ```
 
-If you would like to customize your code (based on FairSeq **v0.6.1**) with distributed training, but not directly use this repo, besides the running script above, maybe (**WARNING**: not tested) it is enough to only copy two functions in this project: the `infer_init_method` in `./fairseq/fairseq/distributed_utils.py` and `save_checkpoint` in `./train.py`, and replace the original ones in your code. If your code is based on FairSeq <= v0.6.0, please come to me for help.
+If you would like to customize your code (based on FairSeq **v0.6.1**) with distributed training, but not directly use this repo, besides the running script above, maybe (**WARNING**: not tested) it is enough to only copy two functions in this project: the `infer_init_method` in `fairseq/fairseq/distributed_utils.py` and `save_checkpoint` in `train.py`, and replace the original ones in your code. If your code is based on FairSeq <= v0.6.0, please come to me for help.
 
 # Warning
 
@@ -30,6 +30,8 @@ I have not tested whether this code/script could support single node jobs.
 I have not tested the support of Blob.
 
 Philly is instable. If you encounter exeptions in running this code, please tell me the job link and I will help you check.
+
+*Please use distributed version only for the most promising setting, but not for exploring all kinds of hyperparameters.*
 
 **Please submit 8-card jobs currently if your are running 6-6 layer jobs, for the sake of better efficiency.**
 
