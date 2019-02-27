@@ -199,13 +199,13 @@ LogFilename=${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-lr${L
 DistFilename=${FullSaveDir}/${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
 
 mkdir -p ${FullSaveDir}
-rm -rf ${DistFilename}
 echo "FullSaveDir" ${FullSaveDir}
 
 MASTER_IP="192.162.1.1"
 THIS_IP="`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`"
 
 if [ "$OMPI_COMM_WORLD_RANK" = "0" ]; then
+		rm -rf ${DistFilename}
 		ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'>${DistFilename}
 		MASTER_IP=${THIS_IP}
 		echo "I am master node with IP" ${THIS_IP}
@@ -218,6 +218,7 @@ if [ "$OMPI_COMM_WORLD_RANK" = "0" ]; then
 		echo "Files in Full Save Dir"
 		ls -alh ${FullSaveDir}
 else
+		sleep 5
 		while [ ! -f ${DistFilename} ]
 		do
 			echo "I am slave node, sleep another 5 seconds" ${THIS_IP}

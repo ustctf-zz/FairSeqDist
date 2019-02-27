@@ -21,9 +21,13 @@ hdfs_mapping={'eu1':'gfs',
             }
 
 
-def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 3277, uf = 40, lr = 0.0005, warm_updates = 4000):
+def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 4096,
+         uf = 32, lr = 0.0005, warm_updates = 4000, arch = "transformer_wmt_en_de_big"):
 
     ngpus = nprocs * nnodes
+    seed = random.randint(1, 2000)
+    port = random.randint(1000, 9999)
+    print('Using seed {} and port {}'.format(seed, port))
 
     job={
     "ClusterId": cluster,
@@ -44,8 +48,9 @@ def post(vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, lo
     "RackId": "anyConnected",
     "MinGPUs": ngpus,
     "PrevModelPath": None,
-    'ExtraParams':"--dataset wmt19.tokenized.fi-en --warm-update {} -M {} --uf {} -E Dist{}x{}_uf4 --nodes {} --port 1326 --nproc {} -A transformer_wmt_en_de_big  -LR {} -SI 1 --max-update 100000 -SIU 0 --enc 6 --dec 6 -LI {} {}".
-        format(warm_updates, max_toks, uf, nnodes, nprocs, nnodes, nprocs, lr, log_interval, "--nccl" if nccl else ""),
+    'ExtraParams':"--dataset {} --warm-update {} -M {} --uf {} -E Dist{}x{} --nodes {} --port {} -s {} --nproc {} "
+                  "-A {}  -LR {} -SI 1 --max-update 100000 -SIU 0 --enc 10 --dec 10 -LI {} {}".
+        format(dataset, warm_updates, max_toks, uf, nnodes, nprocs, nnodes, port, seed, nprocs, arch, lr, log_interval, "--nccl" if nccl else ""),
     "SubmitCode": "p",
     "IsMemCheck": False,
     "IsCrossRack": False,
@@ -69,23 +74,25 @@ def submit():
 
     '''Distributed config'''
     world_size = 4 #number of machines you need
-    ngpupernode = 2 #number of gpus you need on each machine
+    ngpupernode = 4 #number of gpus you need on each machine
     old_docker = False #better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
     nccl = False #better not change
     vc = "msrmt" #vc you run your jobs
     cluster = "wu2" #cluster you run your jobs
 
     '''Training config'''
-    max_toks = 4096 if vc == "msrmt" else 1536
-    uf = 32 if vc == "msrmt" else 86
-    lr = 0.001
-    warm_updates = 8000
-    log_interval = 5
+    max_toks = 2048 if vc == "msrmt" else 1536
+    uf = 16 if vc == "msrmt" else 86
+    lr = 0.0005
+    warm_updates = 4000
+    log_interval = 50
+    dataset = "wmt19.bt1.tokenized.fi-en.joined"
+    arch = "Transformer_wmt_en_de_t2t"
 
-    expname = 'Df{}x{}e_1.0_warm8'.format(world_size, ngpupernode)
+    expname = 'bfettt10_same{}x{}'.format(world_size, ngpupernode)
 
-    post(vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
-         log_interval= log_interval, max_toks= max_toks, uf= uf, lr = lr, warm_updates= warm_updates)
+    post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
+         log_interval= log_interval, max_toks= max_toks, uf= uf, lr = lr, warm_updates= warm_updates, arch= arch)
 
 
 if __name__=='__main__':
