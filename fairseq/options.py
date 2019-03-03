@@ -424,6 +424,11 @@ def add_generation_args(parser):
                        help='strength of diversity penalty for Diverse Beam Search')
     group.add_argument('--print-alignment', action='store_true',
                        help='if set, uses attention feedback to compute and print alignment to source tokens')
+
+    group.add_argument('--output-file', default=None, type=str,
+                       help='Output translation into a file, default is None (disabled)')
+    group.add_argument('--cap-output', action='store_true', default=False,
+                       help='Capitalize the output translation (only applied to translations that output to file), default is False')
     # fmt: on
     return group
 

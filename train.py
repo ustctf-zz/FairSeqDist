@@ -104,7 +104,7 @@ def main(args, init_distributed=False):
     valid_subsets = args.valid_subset.split(',')
     while lr > args.min_lr and epoch_itr.epoch < max_epoch and trainer.get_num_updates() < max_update:
         # train for one epoch
-        torch.distributed.barrier()
+
         print('rank {}, start epoch {}, len {}'.format(args.distributed_rank, epoch_itr.epoch, len(epoch_itr)))
         train(args, trainer, task, epoch_itr)
 
@@ -336,7 +336,7 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
             else: #For slave nodes
                 while not os.path.isfile(tmp_file):
                     time.sleep(5)
-            torch.distributed.barrier()
+            #torch.distributed.barrier()
             if distributed_utils.is_master(args):
                 os.remove(tmp_file)
 

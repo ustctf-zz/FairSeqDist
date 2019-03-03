@@ -11,11 +11,10 @@ Translate pre-processed data with a trained model.
 
 import torch
 
-from fairseq import bleu, options, progress_bar, tasks, tokenizer, utils
+from fairseq import data, options, progress_bar, tasks, tokenizer, utils
 from fairseq.meters import StopwatchMeter, TimeMeter
 from fairseq.sequence_generator import SequenceGenerator
-from fairseq.sequence_scorer import SequenceScorer
-from fairseq.utils import import_user_module
+#from fairseq.sequence_scorer import SequenceScorer
 
 
 def main(args):
@@ -24,8 +23,6 @@ def main(args):
         '--sampling requires --nbest to be equal to --beam'
     assert args.replace_unk is None or args.raw_text, \
         '--replace-unk requires a raw text dataset (--raw-text)'
-
-    import_user_module(args)
 
     if args.max_tokens is None and args.max_sentences is None:
         args.max_tokens = 12000
@@ -39,17 +36,12 @@ def main(args):
     print('| {} {} {} examples'.format(args.data, args.gen_subset, len(task.dataset(args.gen_subset))))
 
     # Set dictionaries
-    try:
-        src_dict = getattr(task, 'source_dictionary', None)
-    except NotImplementedError:
-        src_dict = None
+    src_dict = task.source_dictionary
     tgt_dict = task.target_dictionary
 
     # Load ensemble
     print('| loading model(s) from {}'.format(args.path))
-    models, _model_args = utils.load_ensemble_for_inference(
-        args.path.split(':'), task, model_arg_overrides=eval(args.model_overrides),
-    )
+    models, _ = utils.load_ensemble_for_inference(args.path.split(':'), task, model_arg_overrides=eval(args.model_overrides))
 
     # Optimize ensemble for generation
     for model in models:
@@ -59,6 +51,9 @@ def main(args):
         )
         if args.fp16:
             model.half()
+
+    # Store all hype_str for output
+    hypo_str_dict = {}
 
     # Load alignment dictionary for unknown word replacement
     # (None if no unknown word replacement, empty if no path to align dictionary)
@@ -77,13 +72,13 @@ def main(args):
         required_batch_size_multiple=8,
         num_shards=args.num_shards,
         shard_id=args.shard_id,
-        num_workers=args.num_workers,
     ).next_epoch_itr(shuffle=False)
 
     # Initialize generator
     gen_timer = StopwatchMeter()
     if args.score_reference:
-        translator = SequenceScorer(models, task.target_dictionary)
+        #translator = SequenceScorer(models, task.target_dictionary)
+        pass
     else:
         translator = SequenceGenerator(
             models, task.target_dictionary, beam_size=args.beam, minlen=args.min_len,
@@ -91,17 +86,13 @@ def main(args):
             len_penalty=args.lenpen, unk_penalty=args.unkpen,
             sampling=args.sampling, sampling_topk=args.sampling_topk, sampling_temperature=args.sampling_temperature,
             diverse_beam_groups=args.diverse_beam_groups, diverse_beam_strength=args.diverse_beam_strength,
-            match_source_len=args.match_source_len, no_repeat_ngram_size=args.no_repeat_ngram_size,
         )
 
     if use_cuda:
         translator.cuda()
 
     # Generate and compute BLEU score
-    if args.sacrebleu:
-        scorer = bleu.SacrebleuScorer()
-    else:
-        scorer = bleu.Scorer(tgt_dict.pad(), tgt_dict.eos(), tgt_dict.unk())
+    #scorer = bleu.Scorer(tgt_dict.pad(), tgt_dict.eos(), tgt_dict.unk())
     num_sentences = 0
     has_target = True
     with progress_bar.build_progress_bar(args, itr) as t:
@@ -124,16 +115,12 @@ def main(args):
                 src_str = task.dataset(args.gen_subset).src.get_original_text(sample_id)
                 target_str = task.dataset(args.gen_subset).tgt.get_original_text(sample_id)
             else:
-                if src_dict is not None:
-                    src_str = src_dict.string(src_tokens, args.remove_bpe)
-                else:
-                    src_str = ""
+                src_str = src_dict.string(src_tokens, args.remove_bpe)
                 if has_target:
                     target_str = tgt_dict.string(target_tokens, args.remove_bpe, escape_unk=True)
 
             if not args.quiet:
-                if src_dict is not None:
-                    print('S-{}\t{}'.format(sample_id, src_str))
+                print('S-{}\t{}'.format(sample_id, src_str))
                 if has_target:
                     print('T-{}\t{}'.format(sample_id, target_str))
 
@@ -147,6 +134,9 @@ def main(args):
                     tgt_dict=tgt_dict,
                     remove_bpe=args.remove_bpe,
                 )
+
+                if args.output_file is not None and i == 0:
+                    hypo_str_dict[int(sample_id)] = hypo_str
 
                 if not args.quiet:
                     print('H-{}\t{}\t{}'.format(sample_id, hypo['score'], hypo_str))
@@ -170,26 +160,29 @@ def main(args):
                         # Convert back to tokens for evaluation with unk replacement and/or without BPE
                         target_tokens = tokenizer.Tokenizer.tokenize(
                             target_str, tgt_dict, add_if_not_exist=True)
-                    if hasattr(scorer, 'add_string'):
-                        scorer.add_string(target_str, hypo_str)
-                    else:
-                        scorer.add(target_tokens, hypo_tokens)
+                    #scorer.add(target_tokens, hypo_tokens)
 
             wps_meter.update(src_tokens.size(0))
             t.log({'wps': round(wps_meter.avg)})
             num_sentences += 1
 
+    # Write to output file
+    if args.output_file is not None:
+        with open(args.output_file, 'w', encoding='utf-8') as f:
+            for i in range(len(hypo_str_dict)):
+                hypo = hypo_str_dict[i]
+                if args.cap_output:
+                    hypo = hypo.capitalize()
+                print(hypo, file=f)
+        print('| Write translations into file {}'.format(args.output_file))
+
     print('| Translated {} sentences ({} tokens) in {:.1f}s ({:.2f} sentences/s, {:.2f} tokens/s)'.format(
         num_sentences, gen_timer.n, gen_timer.sum, num_sentences / gen_timer.sum, 1. / gen_timer.avg))
-    if has_target:
-        print('| Generate {} with beam={}: {}'.format(args.gen_subset, args.beam, scorer.result_string()))
-
-
-def cli_main():
-    parser = options.get_generation_parser()
-    args = options.parse_args_and_arch(parser)
-    main(args)
+    #if has_target:
+    #    print('| Generate {} with beam={}: {}'.format(args.gen_subset, args.beam, scorer.result_string()))
 
 
 if __name__ == '__main__':
-    cli_main()
+    parser = options.get_generation_parser()
+    args = options.parse_args_and_arch(parser)
+    main(args)

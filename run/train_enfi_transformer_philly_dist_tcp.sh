@@ -14,7 +14,6 @@ seed=1
 dropout=0.3
 install_fairseq=false
 max_update=0
-# no_epoch_checkpoints="--no-epoch-checkpoints"
 no_epoch_checkpoints=""
 UpdateFreq=64
 Extra="Dist"
@@ -34,6 +33,7 @@ enc=6
 dec=6
 PORT=1234
 WarmUpdates=4000
+ReloadDirName=""
 
 Generate="false"
 
@@ -42,6 +42,10 @@ while [ "$1" != "" ]; do
 		-E | --extra )
 			shift
 			Extra=$1
+			;;
+		-RD | --reload-dir )
+			shift
+			ReloadDirName=$1
 			;;
 		-LR | --learning_rate )
 			shift
@@ -194,9 +198,14 @@ if [[ "${Dataset}" =~ .*\.joined$ ]]; then
 	ShareEmb="--share-all-embeddings"
 fi
 
-FullSaveDir=${SaveDir}/${Dataset}_${Arch}_dp${dropout}_seed${seed}_maxtok${MaxTokens}_lr${LR}_SI${SaveInterval}_enc${enc}_dec${dec}_${Extra}_1.0
-LogFilename=${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
-DistFilename=${FullSaveDir}/${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
+if ["$ReloadDirName" = ""]; then 
+	FullSaveDir=${SaveDir}/${Dataset}_${Arch}_dp${dropout}_seed${seed}_maxtok${MaxTokens}_uf${UpdateFreq}_lr${LR}_SI${SaveInterval}_enc${enc}_dec${dec}_${Extra}_1.0
+else
+	FullSaveDir=${SaveDir}/${ReloadDirName}
+fi
+
+LogFilename=${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
+DistFilename=${FullSaveDir}/${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
 
 mkdir -p ${FullSaveDir}
 echo "FullSaveDir" ${FullSaveDir}
