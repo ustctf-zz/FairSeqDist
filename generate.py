@@ -11,10 +11,10 @@ Translate pre-processed data with a trained model.
 
 import torch
 
-from fairseq import data, options, progress_bar, tasks, tokenizer, utils
+from fairseq import bleu, data, options, progress_bar, tasks, tokenizer, utils
 from fairseq.meters import StopwatchMeter, TimeMeter
 from fairseq.sequence_generator import SequenceGenerator
-#from fairseq.sequence_scorer import SequenceScorer
+from fairseq.sequence_scorer import SequenceScorer
 
 
 def main(args):
@@ -77,7 +77,7 @@ def main(args):
     # Initialize generator
     gen_timer = StopwatchMeter()
     if args.score_reference:
-        #translator = SequenceScorer(models, task.target_dictionary)
+        translator = SequenceScorer(models, task.target_dictionary)
         pass
     else:
         translator = SequenceGenerator(
@@ -92,7 +92,7 @@ def main(args):
         translator.cuda()
 
     # Generate and compute BLEU score
-    #scorer = bleu.Scorer(tgt_dict.pad(), tgt_dict.eos(), tgt_dict.unk())
+    scorer = bleu.Scorer(tgt_dict.pad(), tgt_dict.eos(), tgt_dict.unk())
     num_sentences = 0
     has_target = True
     with progress_bar.build_progress_bar(args, itr) as t:
@@ -160,7 +160,7 @@ def main(args):
                         # Convert back to tokens for evaluation with unk replacement and/or without BPE
                         target_tokens = tokenizer.Tokenizer.tokenize(
                             target_str, tgt_dict, add_if_not_exist=True)
-                    #scorer.add(target_tokens, hypo_tokens)
+                    scorer.add(target_tokens, hypo_tokens)
 
             wps_meter.update(src_tokens.size(0))
             t.log({'wps': round(wps_meter.avg)})
@@ -178,8 +178,8 @@ def main(args):
 
     print('| Translated {} sentences ({} tokens) in {:.1f}s ({:.2f} sentences/s, {:.2f} tokens/s)'.format(
         num_sentences, gen_timer.n, gen_timer.sum, num_sentences / gen_timer.sum, 1. / gen_timer.avg))
-    #if has_target:
-    #    print('| Generate {} with beam={}: {}'.format(args.gen_subset, args.beam, scorer.result_string()))
+    if has_target:
+        print('| Generate {} with beam={}: {}'.format(args.gen_subset, args.beam, scorer.result_string()))
 
 
 if __name__ == '__main__':

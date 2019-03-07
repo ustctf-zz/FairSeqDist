@@ -20,6 +20,7 @@ Extra="Dist"
 MaxTokens=2048
 LRScheduler="inverse_sqrt"
 LR=0.0005
+MaxLR=0.0005
 DdpBackend="no_c10d"
 ShareEmb=""
 FP16=false
@@ -35,6 +36,7 @@ dec=6
 PORT=1234
 WarmUpdates=4000
 ReloadDirName=""
+CosinePeriod=40000
 
 Generate="false"
 
@@ -44,6 +46,10 @@ while [ "$1" != "" ]; do
 			shift
 			Extra=$1
 			;;
+		-LRS | --lr-scheduler )
+			shift
+			LRScheduler=$1
+			;;
 		-RD | --reload-dir )
 			shift
 			ReloadDirName=$1
@@ -51,6 +57,10 @@ while [ "$1" != "" ]; do
 		-LR | --learning_rate )
 			shift
 			LR=$1
+			;;
+		-MLR | --max_lr )
+			shift
+			MaxLR=$1
 			;;
 		-A | --arch )
 			shift
@@ -132,6 +142,10 @@ while [ "$1" != "" ]; do
 		-SIU | --save-interval-updates )
 			shift
 			SaveIntervalUpdates=$1
+			;;
+		-CP | --cosine-period )
+			shift
+			CosinePeriod=$1
 			;;
 		-LI | --log-intervals )
 			shift
@@ -256,7 +270,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --optimizer adam --adam-betas "(0.9, 0.98)" --clip-norm 0.0 \
     --update-freq ${UpdateFreq} \
     --lr-scheduler ${LRScheduler} --warmup-init-lr 1e-07 --warmup-updates ${WarmUpdates} --lr ${LR} \
-	--min-lr 1e-09 \
+	--min-lr 1e-09 --max-lr ${MaxLR} --lr-period-updates ${CosinePeriod} --lr-shrink 1.0 \
     --weight-decay 0.0 --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
     --max-tokens ${MaxTokens} \
     --no-progress-bar \
