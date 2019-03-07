@@ -56,6 +56,10 @@ class TransformerModel(FairseqModel):
                             help='dropout probability for attention weights')
         parser.add_argument('--relu-dropout', type=float, metavar='D',
                             help='dropout probability after ReLU in FFN')
+        parser.add_argument('--encoder-heads-dropout', type=float, metavar='D',
+                            help='dropout probability for heads in multiheads attention in encoder')
+        parser.add_argument('--decoder-heads-dropout', type=float, metavar='D',
+                            help='dropout probability for heads in multiheads attention in decoder')
         parser.add_argument('--encoder-embed-path', type=str, metavar='STR',
                             help='path to pre-trained encoder embedding')
         parser.add_argument('--encoder-embed-dim', type=int, metavar='N',
@@ -584,6 +588,7 @@ class TransformerEncoderLayer(nn.Module):
         self.self_attn = MultiheadAttention(
             self.embed_dim, args.encoder_attention_heads,
             dropout=args.attention_dropout,
+            heads_dropout=args.encoder_heads_dropout,
         )
         self.dropout = args.dropout
         self.relu_dropout = args.relu_dropout
@@ -650,6 +655,7 @@ class TransformerDecoderLayer(nn.Module):
         self.self_attn = MultiheadAttention(
             self.embed_dim, args.decoder_attention_heads,
             dropout=args.attention_dropout,
+            heads_dropout=args.decoder_heads_dropout,
         )
         self.dropout = args.dropout
         self.relu_dropout = args.relu_dropout
@@ -664,6 +670,7 @@ class TransformerDecoderLayer(nn.Module):
             self.encoder_attn = MultiheadAttention(
                 self.embed_dim, args.decoder_attention_heads,
                 dropout=args.attention_dropout,
+                heads_dropout=args.decoder_heads_dropout,
             )
             self.encoder_attn_layer_norm = LayerNorm(self.embed_dim)
 
@@ -855,6 +862,8 @@ def base_architecture(args):
     args.decoder_normalize_before = getattr(args, 'decoder_normalize_before', False)
     args.decoder_learned_pos = getattr(args, 'decoder_learned_pos', False)
     args.attention_dropout = getattr(args, 'attention_dropout', 0.)
+    args.encoder_heads_dropout = getattr(args, 'encoder_heads_dropout', 0.)
+    args.decoder_heads_dropout = getattr(args, 'decoder_heads_dropout', 0.)
     args.relu_dropout = getattr(args, 'relu_dropout', 0.)
     args.dropout = getattr(args, 'dropout', 0.1)
     args.adaptive_softmax_cutoff = getattr(args, 'adaptive_softmax_cutoff', None)

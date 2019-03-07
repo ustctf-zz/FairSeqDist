@@ -19,11 +19,12 @@ class MultiheadAttention(nn.Module):
     See "Attention Is All You Need" for more details.
     """
 
-    def __init__(self, embed_dim, num_heads, dropout=0., bias=True, add_bias_kv=False, add_zero_attn=False):
+    def __init__(self, embed_dim, num_heads, dropout=0., bias=True, add_bias_kv=False, add_zero_attn=False, heads_dropout = 0.):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
         self.dropout = dropout
+        self.heads_dropout = heads_dropout
         self.head_dim = embed_dim // num_heads
         assert self.head_dim * num_heads == self.embed_dim, "embed_dim must be divisible by num_heads"
         self.scaling = self.head_dim ** -0.5
@@ -189,6 +190,13 @@ class MultiheadAttention(nn.Module):
 
         attn = torch.bmm(attn_weights, v)
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
+
+        if self.heads_dropout > 1e-6 and self.training:
+            ber_vars = torch.zeros(bsz, self.num_heads, tgt_len).bernoulli_(p = 1.0 - self.heads_dropout).cuda()
+            attn = attn.view(bsz, self.num_heads, tgt_len, self.head_dim)
+            attn = attn * ber_vars.unsqueeze(3) / (1. - self.heads_dropout)
+            attn = attn.view(bsz * self.num_heads, tgt_len, self.head_dim)
+
         if (self.onnx_trace and attn.size(1) == 1):
             # when ONNX tracing a single decoder step (sequence length == 1)
             # the transpose is a no-op copy before view, thus unnecessary

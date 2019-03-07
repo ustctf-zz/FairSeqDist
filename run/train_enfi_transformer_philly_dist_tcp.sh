@@ -12,6 +12,8 @@ Dataset=wmt19.tokenized.en-fi
 Arch=transformer_wmt_en_de_big
 seed=1
 dropout=0.3
+enc_heads_dp=0.0
+dec_heads_dp=0.0
 install_fairseq=false
 max_update=0
 no_epoch_checkpoints=""
@@ -67,6 +69,14 @@ while [ "$1" != "" ]; do
 		-d | --dropout )
 			shift
 			dropout=$1
+			;;
+		--enc_heads_dp )
+			shift
+			enc_heads_dp=$1
+			;;
+		--dec_heads_dp )
+			shift
+			dec_heads_dp=$1
 			;;
 		--enc )
 			shift
@@ -200,13 +210,13 @@ if [[ "${Dataset}" =~ .*\.joined$ ]]; then
 fi
 
 if ["$ReloadDirName" = ""]; then 
-	FullSaveDir=${SaveDir}/${Dataset}_${Arch}_dp${dropout}_seed${seed}_maxtok${MaxTokens}_uf${UpdateFreq}_lr${LR}_SI${SaveInterval}_enc${enc}_dec${dec}_${Extra}_1.0
+	FullSaveDir=${SaveDir}/${Dataset}_${Arch}_dp${dropout}_seed${seed}_maxtok${MaxTokens}_uf${UpdateFreq}_lr${LR}_ehd${enc_heads_dp}_dhd${dec_heads_dp}_enc${enc}_dec${dec}_${Extra}_1.0
 else
 	FullSaveDir=${SaveDir}/${ReloadDirName}
 fi
 
 LogFilename=${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
-DistFilename=${FullSaveDir}/${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
+DistFilename=${FullSaveDir}/dist.txt
 
 mkdir -p ${FullSaveDir}
 echo "FullSaveDir" ${FullSaveDir}
@@ -259,7 +269,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
 	--min-lr 1e-09 \
     --weight-decay 0.0 --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
     --max-tokens ${MaxTokens} \
-    --no-progress-bar \
+    --no-progress-bar --encoder-heads-dropout ${enc_heads_dp} --decoder-heads-dropout ${dec_heads_dp} \
     --save-dir ${FullSaveDir} \
     --log-interval ${LogInterval} \
     --save-interval ${SaveInterval} --save-interval-updates ${SaveIntervalUpdates} --keep-interval-updates 0 \
