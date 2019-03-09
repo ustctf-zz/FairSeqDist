@@ -22,7 +22,7 @@ hdfs_mapping={'eu1':'gfs',
 
 def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 4096,
          uf = 32, lr = 0.0005, max_lr = 0.0005, warm_updates = 4000, arch = "transformer_wmt_en_de_big", layers = 6, dropout = 0.3, reload_dir = "",
-         lr_scheduler = "inverse_sqrt", cosine_period = 40000, extra = "", save_interval_updates = 0):
+         lr_scheduler = "inverse_sqrt", cosine_period = 40000, extra = "", save_interval_updates = 0, ehd = 0.0, dhd = 0.0):
 
     ngpus = nprocs * nnodes
     seed = random.randint(1, 5000)
@@ -41,7 +41,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "UserName": user,
     "BuildId": 0,
     "ToolType": None,
-    "ConfigFile": "fetia/Src/fairseq_latest/run/train_enfi_transformer_philly_dist_tcp{}.sh".format("_cosine" if is_cosine else ""),
+    "ConfigFile": "fetia/Src/Exploration/FairSeqDist/run/train_enfi_transformer_philly_dist_tcp{}.sh".format("_cosine" if is_cosine else ""),
     "Inputs": [
     {
     "Name": "dataDir",
@@ -55,10 +55,10 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "PrevModelPath": None,
     'ExtraParams':"-d {} --dataset {} --warm-update {} -M {} --uf {} -E {} --nodes {} --port {} -s {} --nproc {} "
                   "-A {}  -LR {} -LRS {} -SI 1 --max-update 130000 -SIU {} --enc {} --dec {} -LI {} {} "
-                  "{} {}".
+                  "{} {} --enc_heads_dp {} --dec_heads_dp {}".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
-               "-RD {}".format(reload_dir) if reload_dir != "" else "", cosine_command if is_cosine else ""),
+               "-RD {}".format(reload_dir) if reload_dir != "" else "", cosine_command if is_cosine else "", ehd, dhd),
     "SubmitCode": "p",
     "IsMemCheck": False,
     "IsCrossRack": False,
@@ -89,32 +89,34 @@ def submit():
     cluster = "wu2" #cluster you run your jobs
 
     '''Training config'''
-    max_toks = 4096 if vc == "msrmt" else 1536
-    #max_toks = 3277
+    #max_toks = 4096 if vc == "msrmt" else 1536
+    max_toks = 3277
     #uf = 32 if vc == "msrmt" else 86
-    uf = 32
+    uf = 40
     #uf = 20
     lr = 0.0005
     max_lr = 0.0005
     lr_scheduler = "inverse_sqrt"
     cosine_period = 35000
     warm_updates = 4000
-    save_updates = 0
-    log_interval = 200
-    dataset = "wmt19.bt1.tokenized.en-fi.joined"
-    arch = "transformer_vaswani_wmt_en_de_big "
+    save_updates = 1000
+    log_interval = 100
+    dataset = "wmt19.db.bt1.tokenized.fi-en.joined"
+    arch = "transformer_wmt_en_de_big"
     layers = 6
     dropout = 0.3
-    reloaddir = "wmt19.bt1.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.3_seed2305_maxtok4096_lr0.0005_SI1_enc6_dec6_Dist2x4_uf4_1.0"
-    #reloaddir = "wmt19.bt1.tokenized.fi-en.joined_transformer_wmt_en_de_big_t2t_dp0.3_seed1792_maxtok2048_uf16_lr0.0005_SI1_enc10_dec10_Dist4x4_1.0"
+    ehd = 0.1
+    dhd = 0.2
     #reloaddir = "wmt19.bt1.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.3_seed2305_maxtok4096_lr0.0005_SI1_enc6_dec6_Dist2x4_uf4_1.0"
+    #reloaddir = "wmt19.bt1.tokenized.fi-en.joined_transformer_wmt_en_de_big_t2t_dp0.3_seed1792_maxtok2048_uf16_lr0.0005_SI1_enc10_dec10_Dist4x4_1.0"
+    reloaddir = "wmt19_fien_bilingual_best_hd"
 
-    expname = '22beft_1'
-    extra = ""
+    expname = '22bfet_9'
+    extra = "ehd0.1dhd0.2"
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
          log_interval= log_interval, max_toks= max_toks, uf= uf, lr = lr, max_lr = max_lr, lr_scheduler= lr_scheduler, warm_updates= warm_updates,
-         arch= arch, layers = layers, dropout= dropout, reload_dir = reloaddir, cosine_period= cosine_period, save_interval_updates= save_updates, extra= extra)
+         arch= arch, layers = layers, dropout= dropout, reload_dir = reloaddir, cosine_period= cosine_period, save_interval_updates= save_updates, extra= extra, ehd= ehd, dhd= dhd)
 
 
 if __name__=='__main__':
