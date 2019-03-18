@@ -35,6 +35,8 @@ dec=6
 PORT=1234
 WarmUpdates=4000
 ReloadDirName=""
+SrcLan="en"
+TgtLan="fi"
 
 Generate="false"
 
@@ -104,6 +106,14 @@ while [ "$1" != "" ]; do
 			;;
 		--nccl )
 			DistBackEnd="nccl"
+			;;
+		--src )
+			shift
+			SrcLan=$1
+			;;
+		--tgt )
+			shift
+			TgtLan=$1
 			;;
 		--fp16 )
 			FP16=true
@@ -264,6 +274,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --log-interval ${LogInterval} \
     --save-interval ${SaveInterval} --save-interval-updates ${SaveIntervalUpdates} --keep-interval-updates 0 \
 	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} --master-address-file ${DistFilename} \
+	--source-lang ${SrcLan}  --target-lang ${TgtLan} \
     2>&1 | tee ${LogDir}/${LogFilename}-train.log.txt
 set +x
 
