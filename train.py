@@ -104,8 +104,7 @@ def main(args, init_distributed=False):
     valid_subsets = args.valid_subset.split(',')
     while lr > args.min_lr and epoch_itr.epoch < max_epoch and trainer.get_num_updates() < max_update:
         # train for one epoch
-
-        print('rank {}, start epoch {}, len {}'.format(args.distributed_rank, epoch_itr.epoch, len(epoch_itr)))
+        print('rank {}, start epoch {}'.format(args.distributed_rank, epoch_itr.epoch))
         train(args, trainer, task, epoch_itr)
 
         if epoch_itr.epoch % args.validate_interval == 0:

@@ -177,7 +177,6 @@ class Trainer(object):
                 ignore_grad = True
             else:
                 ignore_grad = False
-
             try:
                 if self.args.distributed_world_size > 1:
                     # Whenever *samples* contains more than one mini-batch, we

@@ -26,7 +26,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
 
     ngpus = nprocs * nnodes
     seed = random.randint(5000, 9999)
-    #seed = 1583
+    seed = 9337
     port = random.randint(1000, 9999)
     #port = 1678
     is_cosine = lr_scheduler == "cosine"
@@ -81,7 +81,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
 def submit():
 
     '''Distributed config'''
-    world_size = 2 #number of machines you need
+    world_size = 4 #number of machines you need
     ngpupernode = 4 #number of gpus you need on each machine
     old_docker = False #better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
     nccl = False #better not change
@@ -94,7 +94,7 @@ def submit():
     #max_toks = 3277
     #uf = 32 if vc == "msrmt" else 86
     #uf = 32
-    uf = 16
+    uf = 8
     #uf = 20
 
     lr = 0.0005
@@ -114,9 +114,9 @@ def submit():
     tgt = 'en'
     #reloaddir = "wmt19.db.bt1.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.3_seed1583_maxtok4096_uf4_lr0.0005_SI1_enc6_dec6_Dist2x4_1.0"
     #reloaddir = "2nd_ef2fe5_startef_basic_14"
-    reloaddir = "2nd_ef2fe5_startfe9"
+    #reloaddir = "2nd_ef2fe5_startfe9"
 
-    expname = '5_ef2fe5_neg_wm'
+    expname = '6_ef2fe5_neg_co'
     extra = expname
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,

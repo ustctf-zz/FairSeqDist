@@ -7,6 +7,8 @@ DataDir=/hdfs/${PHILLY_VC}/fetia/Data
 SaveDir=/hdfs/${PHILLY_VC}/fetia/Ckpts
 LogDir=/hdfs/${PHILLY_VC}/fetia/Log
 
+Score=false
+
 BeamSize=5
 LenPen=1.0
 FP16=false
@@ -17,6 +19,9 @@ CkptDir=wmt19.bt1.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.3
 Ckpt=checkpoint20.pt
 SourceDirPrefix=wmt19.train.mono.final_30000000
 SourceFilename=part.aa
+RemoveBPEArgs=""
+src_l=en
+tgt_l=fi
 
 while [ "$1" != "" ]; do
 	case $1 in
@@ -48,6 +53,20 @@ while [ "$1" != "" ]; do
 			shift
 			SourceDirPrefix=$1
 			;;
+		-S | --score )
+			Score=true
+			;;
+		--remove_bpe )
+			RemoveBPEArgs=" --remove-bpe "
+			;;
+		--src_lan )
+			shift
+			src_l=$1
+			;;
+		--tgt_lan )
+			shift
+			tgt_l=$1
+			;;
 		--src | --source )
 			shift
 			SourceFilename=$1
@@ -58,16 +77,12 @@ while [ "$1" != "" ]; do
 	shift
 done
 
-# Detect language automatically.
-l=$(python -c "s='${Dataset}';i=s.index('-');print(s[i-2:i+3])")
-src_l=$(python -c "print('${l}'.split('-')[0])")
-tgt_l=$(python -c "print('${l}'.split('-')[1])")
 
 SourceDir=${SourceDirPrefix}.${src_l}
 FullSourceFile=${DataDir}/${SourceDir}/${SourceFilename}
 LogFilename=${LogDir}/${CkptDir}-${Ckpt}-${SourceFilename}.log.txt
 OutputDir=${SaveDir}/${CkptDir}-${Ckpt}-sample/${SourceDir}
-FullOutputFile=${OutputDir}/translated.${SourceFilename}
+FullOutputFile=${OutputDir}/translated.${SourceFilename}.${tgt_l}
 
 mkdir -pv ${OutputDir}
 
@@ -101,8 +116,31 @@ python ${ProjectDir}/generate_v2.py ${DataDir}/${Dataset} \
     --quiet \
     --decode-source-file ${FullSourceFile} \
 	--decode-output-file ${FullOutputFile} \
-	--skip-invalid-size-inputs-valid-test \
+	--skip-invalid-size-inputs-valid-test  ${RemoveBPEArgs}\
 	--decode-to-file
     2>&1 | tee -a ${LogFilename}
 set +x
 echo "Sampling checkpoint ${CkptDir}/${Ckpt} done." | tee -a ${LogFilename}
+
+
+# Detect language automatically.
+# l=$(python -c "s='${Dataset}';i=s.index('-');print(s[i-2:i+3])")
+# src_l=$(python -c "print('${l}'.split('-')[0])")
+# tgt_l=$(python -c "print('${l}'.split('-')[1])")
+
+if [ "$Score" = "true" ]; then
+	echo "Installing SacreBLEU..."
+	export PATH="$(pwd)/.local/bin:${PATH}"
+	python -m pip install sacrebleu --prefix .local
+	
+	year=$(python -c "print('${SourceFilename}'.split('.')[0][-2:])")
+	echo "Running SacreBLEU..." | tee -a ${LogFilename}
+	echo "The translated file contains $(wc -l ${FullOutputFile}) lines."
+	Detokenizer=${ProjectDir}/../mosesdecoder/scripts/tokenizer/detokenizer.perl
+	set -x
+	cat ${FullOutputFile} | \
+		perl ${Detokenizer} -l ${tgt_l} | \
+		sacrebleu -t wmt${year} -l ${src_l}-${tgt_l} -w 2 
+	set +x
+fi
+
