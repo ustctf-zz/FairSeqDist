@@ -38,6 +38,7 @@ ReloadDirName=""
 SrcLan="en"
 TgtLan="fi"
 
+R2LArgs=""
 Generate="false"
 
 while [ "$1" != "" ]; do
@@ -118,6 +119,9 @@ while [ "$1" != "" ]; do
 		--fp16 )
 			FP16=true
 			FP16Args="--fp16"; FP16SaveName="fp16_"; FP16LogName="fp16-"
+			;;
+		--r2l )
+			R2LArgs="--r2l"
 			;;
 		--uf | --update-freq )
 			shift
@@ -210,13 +214,13 @@ if [[ "${Dataset}" =~ .*\.joined$ ]]; then
 fi
 
 if ["$ReloadDirName" = ""]; then 
-	FullSaveDir=${SaveDir}/${Dataset}_${Arch}_dp${dropout}_seed${seed}_maxtok${MaxTokens}_uf${UpdateFreq}_lr${LR}_SI${SaveInterval}_enc${enc}_dec${dec}_${Extra}_1.0
+	FullSaveDir=${SaveDir}/${Dataset}_${Arch}_dp${dropout}_seed${seed}_maxtok${MaxTokens}_uf${UpdateFreq}_lr${LR}_enc${enc}_dec${dec}_${Extra}${R2LArgs}
 else
 	FullSaveDir=${SaveDir}/${ReloadDirName}
 fi
 
-LogFilename=${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
-DistFilename=${FullSaveDir}/${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-SI${SaveInterval}-enc${enc}-dec${dec}-${Extra}_1.0
+LogFilename=${Dataset}-${Arch}-dp${dropout}-seed${seed}-maxtok${MaxTokens}-uf${UpdateFreq}-lr${LR}-enc${enc}-dec${dec}-${Extra}_1.0${R2LArgs}
+DistFilename=${FullSaveDir}/DIST
 
 mkdir -p ${FullSaveDir}
 echo "FullSaveDir" ${FullSaveDir}
@@ -274,7 +278,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --log-interval ${LogInterval} \
     --save-interval ${SaveInterval} --save-interval-updates ${SaveIntervalUpdates} --keep-interval-updates 0 \
 	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} --master-address-file ${DistFilename} \
-	--source-lang ${SrcLan}  --target-lang ${TgtLan} \
+	--source-lang ${SrcLan}  --target-lang ${TgtLan} ${R2LArgs} \
     2>&1 | tee ${LogDir}/${LogFilename}-train.log.txt
 set +x
 

@@ -103,7 +103,7 @@ class LanguagePairDataset(FairseqDataset):
         tgt=None, tgt_sizes=None, tgt_dict=None,
         left_pad_source=True, left_pad_target=False,
         max_source_positions=1024, max_target_positions=1024,
-        shuffle=True, input_feeding=True, remove_eos_from_source=False, append_eos_to_target=False,
+        shuffle=True, input_feeding=True, remove_eos_from_source=False, append_eos_to_target=False, r2l=False,
     ):
         if tgt_dict is not None:
             assert src_dict.pad() == tgt_dict.pad()
@@ -123,6 +123,7 @@ class LanguagePairDataset(FairseqDataset):
         self.input_feeding = input_feeding
         self.remove_eos_from_source = remove_eos_from_source
         self.append_eos_to_target = append_eos_to_target
+        self.r2l = r2l
 
     def __getitem__(self, index):
         tgt_item = self.tgt[index] if self.tgt is not None else None
@@ -179,6 +180,10 @@ class LanguagePairDataset(FairseqDataset):
                   target sentence of shape `(bsz, tgt_len)`. Padding will appear
                   on the left if *left_pad_target* is ``True``.
         """
+        if self.r2l:
+            for sample in samples:
+                sample['target'] = data_utils.reverse_tokens(sample['target'])
+
         return collate(
             samples, pad_idx=self.src_dict.pad(), eos_idx=self.src_dict.eos(),
             left_pad_source=self.left_pad_source, left_pad_target=self.left_pad_target,

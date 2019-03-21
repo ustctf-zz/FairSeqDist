@@ -235,7 +235,7 @@ def decode_from_file(models, task, args, use_cuda, source_filename=None,
 
     # Load dataset (possibly sharded)
     dataset = data.LanguagePairDataset(
-        src_tokens, src_sizes, src_dict, tgt_tokens, tgt_sizes, tgt_dict, shuffle=False)
+        src_tokens, src_sizes, src_dict, tgt_tokens, tgt_sizes, tgt_dict, shuffle=False, r2l=args.r2l)
     itr = task.get_batch_iterator(
         dataset=dataset,
         max_tokens=args.max_tokens,

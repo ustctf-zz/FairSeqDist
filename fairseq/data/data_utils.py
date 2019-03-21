@@ -79,6 +79,12 @@ def collate_tokens(values, pad_idx, eos_idx, left_pad, move_eos_to_beginning=Fal
         copy_tensor(v, res[i][size - len(v):] if left_pad else res[i][:len(v)])
     return res
 
+def reverse_tokens(sent):
+    """assume the sent is a 1D tensor ending with EOS"""
+    val = sent.flip(0)
+    sent[-1] = val[0]
+    sent[:-1] = val[1:]
+    return sent
 
 @contextlib.contextmanager
 def numpy_seed(seed):

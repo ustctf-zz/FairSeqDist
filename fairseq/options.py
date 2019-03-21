@@ -222,6 +222,8 @@ def add_dataset_args(parser, train=False, gen=False):
                        help='maximum number of tokens in a batch')
     group.add_argument('--max-sentences', '--batch-size', type=int, metavar='N',
                        help='maximum number of sentences in a batch')
+    group.add_argument('--r2l', action='store_true',
+                       help='Training and decoding from right to left')
     if train:
         group.add_argument('--train-subset', default='train', metavar='SPLIT',
                            choices=['train', 'valid', 'test'],
