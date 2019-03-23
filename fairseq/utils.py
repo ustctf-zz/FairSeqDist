@@ -296,9 +296,9 @@ def replace_unk(hypo_str, src_str, alignment, align_dict, unk):
     return ' '.join(hypo_tokens)
 
 
-def post_process_prediction(hypo_tokens, src_str, alignment, align_dict, tgt_dict, remove_bpe):
+def post_process_prediction(hypo_tokens, src_str, alignment, align_dict, tgt_dict, remove_bpe, reverse = False):
     from fairseq import tokenizer
-    hypo_str = tgt_dict.string(hypo_tokens, remove_bpe)
+    hypo_str = tgt_dict.string(hypo_tokens, remove_bpe, reverse = reverse)
     if align_dict is not None:
         hypo_str = replace_unk(hypo_str, src_str, alignment, align_dict, tgt_dict.unk_string())
     if align_dict is not None or remove_bpe is not None:

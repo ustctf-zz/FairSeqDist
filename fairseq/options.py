@@ -426,6 +426,8 @@ def add_generation_args(parser):
                        help='strength of diversity penalty for Diverse Beam Search')
     group.add_argument('--print-alignment', action='store_true',
                        help='if set, uses attention feedback to compute and print alignment to source tokens')
+    group.add_argument('--recover-l2r', action='store_true',
+                       help='Whether to recover the previous l2r order if the model is r2l')
 
     group.add_argument('--output-file', default=None, type=str,
                        help='Output translation into a file, default is None (disabled)')

@@ -25,6 +25,7 @@ Dataset=wmt19.tokenized.en-fi
 CkptDir=wmt19.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.1_seed1_
 GenSubset=test
 SacreBLEUTestSet=wmt18
+R2LArgs=""
 
 while [ "$1" != "" ]; do
 	case $1 in
@@ -50,6 +51,9 @@ while [ "$1" != "" ]; do
 		--no-sacre )
 			Sacre=false
 			SacreArgs=""
+			;;
+		--r2l )
+			R2LArgs="--r2l --recover-l2r"
 			;;
 		--cap-out )
 			CapOut="--cap-output"
@@ -116,7 +120,7 @@ for ckpt in $(ls ${FullSaveDir}); do
 	    --beam ${BeamSize} \
 	    --lenpen ${LenPen} \
 	    --remove-bpe \
-	    --quiet --source-lang ${SrcLan}  --target-lang ${TgtLan} \
+	    --quiet --source-lang ${SrcLan}  --target-lang ${TgtLan} ${R2LArgs} \
 	    ${SacreArgs} \
 	    ${CapOut} \
 	    2>&1 | tee -a ${LogFilename}
@@ -125,8 +129,6 @@ for ckpt in $(ls ${FullSaveDir}); do
 		echo "Running SacreBLEU..." | tee -a ${LogFilename}
 		echo "The translated file contains $(wc -l ${TmpFile}) lines."
 
-		l=$(python -c "s='${Dataset}';i=s.index('-');print(s[i-2:i+3])")
-		tgt_l=$(python -c "print('${l}'.split('-')[1])")
 		set -x
 		cat ${TmpFile} | \
 			perl ${Detokenizer} -l ${TgtLan} | \

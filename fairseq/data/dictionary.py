@@ -7,6 +7,7 @@
 
 from collections import Counter
 import os
+from . import data_utils
 
 import torch
 
@@ -43,13 +44,16 @@ class Dictionary(object):
             return self.indices[sym]
         return self.unk_index
 
-    def string(self, tensor, bpe_symbol=None, escape_unk=False):
+    def string(self, tensor, bpe_symbol=None, escape_unk=False, reverse = False):
         """Helper for converting a tensor of token indices to a string.
 
         Can optionally remove BPE symbols or escape <unk> words.
         """
         if torch.is_tensor(tensor) and tensor.dim() == 2:
             return '\n'.join(self.string(t) for t in tensor)
+
+        if reverse:
+            tensor = data_utils.reverse_tokens(tensor)
 
         def token_string(i):
             if i == self.unk():

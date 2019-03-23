@@ -25,7 +25,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
          lr_scheduler = "inverse_sqrt", cosine_period = 40000, extra = "", save_interval_updates = 0, src = "en", tgt = "fi", r2l = False):
 
     ngpus = nprocs * nnodes
-    seed = random.randint(3000, 9999)
+    seed = random.randint(500, 9999)
     #seed = 9337
     port = random.randint(1000, 9999)
     #port = 1678
@@ -102,7 +102,7 @@ def submit():
     lr_scheduler = "inverse_sqrt"
     cosine_period = 35000
     warm_updates = 4000
-    save_updates = 1500
+    save_updates = 0
     log_interval = 200
     dataset = "wmt19.tokenized.en-fi.joined"
     arch = "transformer_wmt_en_de_big"
@@ -113,7 +113,7 @@ def submit():
     src = "fi"
     tgt = 'en'
     r2l = True
-    #reloaddir = "wmt19.db.bt1.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.3_seed1583_maxtok4096_uf4_lr0.0005_SI1_enc6_dec6_Dist2x4_1.0"
+    reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed4296_maxtok4096_uf11_lr0.0005_enc6_dec6_frlbsee--r2l"
     #reloaddir = "2nd_ef2fe5_startef_basic_14"
     #reloaddir = "2nd_ef2fe5_startfe9"
 

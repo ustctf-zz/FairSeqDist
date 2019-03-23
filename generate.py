@@ -133,6 +133,7 @@ def main(args):
                     align_dict=align_dict,
                     tgt_dict=tgt_dict,
                     remove_bpe=args.remove_bpe,
+                    reverse= args.recover_l2r and args.r2l,
                 )
 
                 if args.output_file is not None and i == 0:
