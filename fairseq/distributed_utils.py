@@ -6,7 +6,7 @@
 # can be found in the PATENTS file in the same directory.
 
 from collections import namedtuple
-import os
+import os,sys
 import pickle
 import subprocess
 
@@ -121,15 +121,8 @@ def get_default_group():
 def all_reduce(tensor, group=None):
     if group is None:
         group = get_default_group()
-    try:
-        r = dist.all_reduce(tensor, group=group)
-        return r
-    except RuntimeError as e:
-        print(str(e))
-        raise e
-        #raise RuntimeError('out of memory')
 
-    #return dist.all_reduce(tensor, group=group)
+    return dist.all_reduce(tensor, group=group)
 
 
 def all_gather_list(data, group=None, max_size=16384):
