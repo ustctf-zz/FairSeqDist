@@ -37,7 +37,7 @@ WarmUpdates=4000
 ReloadDirName=""
 SrcLan="en"
 TgtLan="fi"
-
+UpdateCode=false
 R2LArgs=""
 Generate="false"
 
@@ -98,6 +98,9 @@ while [ "$1" != "" ]; do
 			;;
 		-G | --generate )
 			Generate="true"
+			;;
+		-UC | --update-code )
+			UpdateCode=true
 			;;
 		--no-c10d )
 			DdpBackend="no_c10d"
@@ -254,6 +257,16 @@ else
 		echo "I am slave node with IP" ${THIS_IP} 
 		echo "my master IP" ${MASTER_IP}
 fi	
+
+ 
+if [ "$UpdateCode" = "true" ]; then
+	OldPwd=$(pwd)
+	set -x
+	cd ${ProjectDir}
+	git pull
+	cd ${OldPwd}
+	set +x
+fi
 
 set -x
 python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
