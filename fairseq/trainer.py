@@ -156,7 +156,7 @@ class Trainer(object):
 
         return extra_state
 
-    def train_step(self, samples, dummy_batch=False):
+    def train_step(self, samples, dummy_batch=False, args = None):
         """Do forward, backward and parameter update."""
         self._set_seed()
         self.model.train()
@@ -204,6 +204,7 @@ class Trainer(object):
                     ooms += 1
                     self.zero_grad()
                 else:
+                    print('Rank {}, error {}'.format(args.distributed_rank, str(e)))
                     raise e
 
         if ooms > 0 and self._oom_batch is not None:

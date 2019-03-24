@@ -142,7 +142,7 @@ def train(args, trainer, task, epoch_itr):
     max_update = args.max_update or math.inf
     #torch.distributed.barrier()
     for i, samples in enumerate(progress, start=epoch_itr.iterations_in_epoch):
-        log_output = trainer.train_step(samples)
+        log_output = trainer.train_step(samples, args)
         if log_output is None:
             continue
 

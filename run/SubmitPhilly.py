@@ -34,6 +34,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
 
     print('Using seed {} and port {}'.format(seed, port))
 
+
     job={
     "ClusterId": cluster,
     "VcId": vc,
@@ -41,7 +42,10 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "UserName": user,
     "BuildId": 0,
     "ToolType": None,
-    "ConfigFile": "fetia/Src/fairseq_latest/run/train_enfi_transformer_philly_dist_tcp{}.sh".format("_cosine" if is_cosine else ""),
+    "ConfigFile": "fetia/Src/{}/run/train_enfi_transformer_philly_dist_tcp.sh".format("fairseq_latest" if cluster == "wu2" else "FairSeqDist"),
+    #if nnodes > 1
+    #            else "fetia/Src/FairSeqDist/run/train_enfi_transformer_philly_single.sh",
+    #"ConfigFile": "fetia/Src/fairseq_verylatest/run/train_enfi_transformer_philly_single.sh",
     "Inputs": [
     {
     "Name": "dataDir",
@@ -54,7 +58,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "MinGPUs": ngpus,
     "PrevModelPath": None,
     'ExtraParams':"-d {} --dataset {} --warm-update {} -M {} --uf {} -E {} --nodes {} --port {} -s {} --nproc {} "
-                  "-A {}  -LR {} -LRS {} -SI 1 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
+                  "-A {}  -LR {} -LRS {} -SI 2 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
                   "{} {} --src {} --tgt {} {}".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
@@ -68,7 +72,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "OneProcessPerContainer": True,
     "DynamicContainerSize": False,
     "NumOfContainers": nnodes,
-    "CustomMPIArgs": 'env OMPI_MCA_BTL=self,sm,tcp,openib',
+    "CustomMPIArgs": 'env CUDA_CACHE_DISABLE=1 NCCL_IB_DISABLE=0 NCCL_DEBUG=INFO NCCL_SOCKET_IFNAME=^docker0',
     "Timeout": None
     }
 
@@ -81,21 +85,27 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
 def submit():
 
     '''Distributed config'''
-    world_size = 3 #number of machines you need
-    ngpupernode = 4 #number of gpus you need on each machine
-    old_docker = False #better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
+    world_size = 2 #number of machines you need
+    ngpupernode = 8 #number of gpus you need on each machine
+
     nccl = False #better not change
+    #old_docker = True or old_code
+    old_docker = False # better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
     vc = "msrmt" #vc you run your jobs
     cluster = "wu2" #cluster you run your jobs
+
+    vc = "resrchprojvc3"  # vc you run your jobs
+    cluster = "sc3"  # cluster you run your jobs
 
     '''Training config'''
     #max_toks = 4096 if vc == "msrmt" else 1536
     max_toks = 4096
-    #max_toks = 3277
+    #max_toks = 3072
     #uf = 32 if vc == "msrmt" else 86
     #uf = 32
-    uf = 11
-    #uf = 20
+    uf = 16
+    #uf = 11
+    #uf = 40
 
     lr = 0.0005
     max_lr = 0.0005
@@ -103,7 +113,7 @@ def submit():
     cosine_period = 35000
     warm_updates = 4000
     save_updates = 0
-    log_interval = 200
+    log_interval = 1
     dataset = "wmt19.tokenized.en-fi.joined"
     arch = "transformer_wmt_en_de_big"
     #arch = "transformer_vaswani_wmt_en_de_big"
@@ -113,11 +123,12 @@ def submit():
     src = "fi"
     tgt = 'en'
     r2l = True
-    reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed4296_maxtok4096_uf11_lr0.0005_enc6_dec6_frlbsee--r2l"
-    #reloaddir = "2nd_ef2fe5_startef_basic_14"
+    #reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed4296_maxtok4096_uf11_lr0.0005_enc6_dec6_frlbsee--r2l"
+    #reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed9128_maxtok4096_uf11_lr0.0005_enc6_dec6_erlbsef--r2l"
     #reloaddir = "2nd_ef2fe5_startfe9"
+    #reloaddir = "FiEnR2L"
 
-    expname = 'frlbsee'
+    expname = '24_noc10d_gloo_largemem'
     extra = expname
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,

@@ -278,8 +278,8 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --log-interval ${LogInterval} \
     --save-interval ${SaveInterval} --save-interval-updates ${SaveIntervalUpdates} --keep-interval-updates 0 \
 	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} --master-address-file ${DistFilename} \
-	--source-lang ${SrcLan}  --target-lang ${TgtLan} ${R2LArgs} \
-    2>&1 | tee ${LogDir}/${LogFilename}-train.log.txt
+	--source-lang ${SrcLan}  --target-lang ${TgtLan} ${R2LArgs} 
+    #2>&1 | tee ${LogDir}/${LogFilename}-train.log.txt
 set +x
 
 if [ "$Generate" == "true" ]

@@ -88,7 +88,7 @@ def distributed_init(args):
         rank=args.distributed_rank,
     )
 
-    suppress_output(is_master(args))
+    #suppress_output(is_master(args))
 
     return args.distributed_rank
 
@@ -121,7 +121,14 @@ def get_default_group():
 def all_reduce(tensor, group=None):
     if group is None:
         group = get_default_group()
-    return dist.all_reduce(tensor, group=group)
+    try:
+        r = dist.all_reduce(tensor, group=group)
+        return r
+    except RuntimeError as e:
+        print(str(e))
+        raise RuntimeError('out of memory')
+
+    #return dist.all_reduce(tensor, group=group)
 
 
 def all_gather_list(data, group=None, max_size=16384):
