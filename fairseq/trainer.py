@@ -209,7 +209,7 @@ class Trainer(object):
                     print('Rank {}, error {}'.format(args.distributed_rank, str(e)))
                     sys.stdout.flush()
                     raise e
-
+        print('Rank {}, ooms {}'.format(args.distributed_rank, ooms))
         if ooms > 0 and self._oom_batch is not None:
             self.handle_ooms(ooms)
 

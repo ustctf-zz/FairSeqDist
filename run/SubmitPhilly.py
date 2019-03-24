@@ -100,12 +100,14 @@ def submit():
     '''Training config'''
     #max_toks = 4096 if vc == "msrmt" else 1536
     #max_toks = 4096
-    max_toks = 3584
+    #max_toks = 3584
+    max_toks = 2048
     #uf = 32 if vc == "msrmt" else 86
     #uf = 32
-    #uf = 16
+    uf = 16
+    #uf = 8
     #uf = 18
-    uf = 11
+    #uf = 11
     #uf = 40
 
     lr = 0.0005
@@ -129,7 +131,7 @@ def submit():
     #reloaddir = "2nd_ef2fe5_startfe9"
     #reloaddir = "FiEnR2L"
 
-    expname = '24_noc10d_gloo_largemem'
+    expname = '24_noc10d_gloo_smallmem'
     extra = expname
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
