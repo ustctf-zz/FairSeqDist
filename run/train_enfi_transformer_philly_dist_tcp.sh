@@ -246,6 +246,14 @@ if [ "$OMPI_COMM_WORLD_RANK" = "0" ]; then
 		ls -alh ${FullSaveDir}
 		echo "Sizes in Save Dir"
 		du --max-depth=1 -h ${SaveDir}
+		if [ "$UpdateCode" = "true" ]; then
+			OldPwd=$(pwd)
+			set -x
+			cd ${ProjectDir}
+			git pull
+			cd ${OldPwd}
+		set +x
+fi
 else
 		sleep 5
 		while [ ! -f ${DistFilename} ]
@@ -259,14 +267,7 @@ else
 fi	
 
  
-if [ "$UpdateCode" = "true" ]; then
-	OldPwd=$(pwd)
-	set -x
-	cd ${ProjectDir}
-	git pull
-	cd ${OldPwd}
-	set +x
-fi
+
 
 set -x
 python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
