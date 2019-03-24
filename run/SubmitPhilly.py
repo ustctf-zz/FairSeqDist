@@ -99,7 +99,7 @@ def submit():
 
     '''Training config'''
     #max_toks = 4096 if vc == "msrmt" else 1536
-    max_toks = 4096
+    max_toks = 5120
     #max_toks = 3072
     #uf = 32 if vc == "msrmt" else 86
     #uf = 32
