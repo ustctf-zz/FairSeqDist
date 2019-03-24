@@ -88,7 +88,7 @@ def distributed_init(args):
         rank=args.distributed_rank,
     )
 
-    #suppress_output(is_master(args))
+    suppress_output(is_master(args))
 
     return args.distributed_rank
 

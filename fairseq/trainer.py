@@ -209,7 +209,6 @@ class Trainer(object):
                     print('Rank {}, error {}'.format(self.args.distributed_rank, str(e)))
                     sys.stdout.flush()
                     raise e
-        print('Rank {}, ooms {}'.format(self.args.distributed_rank, ooms))
         if ooms > 0 and self._oom_batch is not None:
             self.handle_ooms(ooms)
 
@@ -354,7 +353,7 @@ class Trainer(object):
         In case of OOMs, gpus may fail to sync, so we manually iterate
         extra to make sure each gpu makes same number of iterations.
         """
-        print('I need to handle {} ooms, as rank {}', number_of_ooms, self.args.distributed_rank)
+        #print('I need to handle {} ooms, as rank {}'.format(number_of_ooms, self.args.distributed_rank))
         for _ in range(number_of_ooms):
             self.train_step([self._oom_batch], True)
 
