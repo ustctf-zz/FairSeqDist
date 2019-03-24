@@ -126,6 +126,7 @@ def all_reduce(tensor, group=None):
         return r
     except RuntimeError as e:
         print(str(e))
+        raise e
         #raise RuntimeError('out of memory')
 
     #return dist.all_reduce(tensor, group=group)

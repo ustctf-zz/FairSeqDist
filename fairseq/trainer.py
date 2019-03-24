@@ -12,6 +12,8 @@ Train a network across multiple GPUs.
 from collections import OrderedDict
 from itertools import chain
 
+import sys
+
 import torch
 
 from fairseq import distributed_utils, models, optim, utils
@@ -205,6 +207,7 @@ class Trainer(object):
                     self.zero_grad()
                 else:
                     print('Rank {}, error {}'.format(args.distributed_rank, str(e)))
+                    sys.stdout.flush()
                     raise e
 
         if ooms > 0 and self._oom_batch is not None:

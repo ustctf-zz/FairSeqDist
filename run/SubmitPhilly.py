@@ -59,7 +59,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "PrevModelPath": None,
     'ExtraParams':"-d {} --dataset {} --warm-update {} -M {} --uf {} -E {} --nodes {} --port {} -s {} --nproc {} "
                   "-A {}  -LR {} -LRS {} -SI 2 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
-                  "{} {} --src {} --tgt {} {}".
+                  "{} {} --src {} --tgt {} {} -UC".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
                "-RD {}".format(reload_dir) if reload_dir != "" else "", cosine_command if is_cosine else "", src, tgt, "--r2l" if r2l else ""),
@@ -99,7 +99,7 @@ def submit():
 
     '''Training config'''
     #max_toks = 4096 if vc == "msrmt" else 1536
-    max_toks = 5120
+    max_toks = 4096
     #max_toks = 3072
     #uf = 32 if vc == "msrmt" else 86
     #uf = 32
