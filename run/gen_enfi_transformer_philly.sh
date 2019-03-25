@@ -26,6 +26,7 @@ CkptDir=wmt19.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.1_see
 GenSubset=test
 SacreBLEUTestSet=wmt18
 R2LArgs=""
+UpdateCode=false
 
 while [ "$1" != "" ]; do
 	case $1 in
@@ -71,6 +72,9 @@ while [ "$1" != "" ]; do
 			GenSubset=$1
 			SacreBLEUTestSet=$1
 			;;
+		-UC | --update-code )
+			UpdateCode=true
+			;;
 		* )
 			;;
 	esac
@@ -107,6 +111,15 @@ else
 	SacreArgs=""
 fi
 
+if [ "$UpdateCode" = "true" ]; then
+	OldPwd=$(pwd)
+	set -x
+	cd ${ProjectDir}
+	git pull
+	cd ${OldPwd}
+	set +x
+fi
+		
 echo "Scoring task ${CkptDir} on subset '${GenSubset}' and SacreBLEU subset '${SacreBLEUTestSet}'..." | tee -a ${LogFilename}
 for ckpt in $(ls ${FullSaveDir}); do
 	echo "Scoring checkpoint ${ckpt}..." | tee -a ${LogFilename}

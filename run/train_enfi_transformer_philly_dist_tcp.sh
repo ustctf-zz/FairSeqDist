@@ -252,8 +252,8 @@ if [ "$OMPI_COMM_WORLD_RANK" = "0" ]; then
 			cd ${ProjectDir}
 			git pull
 			cd ${OldPwd}
-		set +x
-fi
+			set +x
+		fi
 else
 		sleep 5
 		while [ ! -f ${DistFilename} ]
