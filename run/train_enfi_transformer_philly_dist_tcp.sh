@@ -3,10 +3,6 @@
 # FIXME: Hard code here, assume that the training script in `.../ProjectRoot/ignored_scripts/` (depth = 1)
 ProjectDir=$(readlink -f $(dirname ${PHILLY_CONFIG_FILE})/../ )
 
-DataDir=/hdfs/${PHILLY_VC}/fetia/Data
-SaveDir=/hdfs/${PHILLY_VC}/fetia/Ckpts
-LogDir=/hdfs/${PHILLY_VC}/fetia/Log
-DistDir=/hdfs/${PHILLY_VC}/fetia/Dist
 
 Dataset=wmt19.tokenized.en-fi
 Arch=transformer_wmt_en_de_big
@@ -40,6 +36,7 @@ TgtLan="fi"
 UpdateCode=false
 R2LArgs=""
 Generate="false"
+UseBlob="false"
 
 while [ "$1" != "" ]; do
 	case $1 in
@@ -102,6 +99,9 @@ while [ "$1" != "" ]; do
 		-UC | --update-code )
 			UpdateCode=true
 			;;
+		-BLOB  )
+			UseBlob=true
+			;;
 		--no-c10d )
 			DdpBackend="no_c10d"
 			;;
@@ -163,6 +163,19 @@ while [ "$1" != "" ]; do
 	esac
 	shift
 done
+
+if [ "$UseBlob" = "true" ]; then
+	DataDir=/blob/fetia/Data
+	SaveDir=/blob/fetia/Ckpts
+	LogDir=/blob/fetia/Log
+	DistDir=/blob/fetia/Dist
+else		
+	DataDir=/hdfs/${PHILLY_VC}/fetia/Data
+	SaveDir=/hdfs/${PHILLY_VC}/fetia/Ckpts
+	LogDir=/hdfs/${PHILLY_VC}/fetia/Log
+	DistDir=/hdfs/${PHILLY_VC}/fetia/Dist
+fi
+
 
 function status_check {
 	echo "======================= GPU & CUDA Version Checks ========================"

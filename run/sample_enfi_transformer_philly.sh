@@ -14,6 +14,8 @@ LenPen=1.0
 FP16=false
 BatchSize=1024
 
+R2LArgs=""
+
 Dataset=wmt19.bt1.tokenized.en-fi.joined
 CkptDir=wmt19.bt1.tokenized.en-fi.joined_transformer_vaswani_wmt_en_de_big_dp0.3_seed2305_maxtok4096_lr0.0005_SI1_enc6_dec6_Dist2x4_uf4_1.0
 Ckpt=checkpoint20.pt
@@ -55,6 +57,9 @@ while [ "$1" != "" ]; do
 			;;
 		-S | --score )
 			Score=true
+			;;
+		--r2l )
+			R2LArgs="--r2l --recover-l2r"
 			;;
 		--remove_bpe )
 			RemoveBPEArgs=" --remove-bpe "
@@ -112,11 +117,11 @@ python ${ProjectDir}/generate_v2.py ${DataDir}/${Dataset} \
     --beam ${BeamSize} \
     --nbest ${BeamSize} \
     --lenpen ${LenPen} \
-    --source-lang ${src_l} --target-lang ${tgt_l} \
+    --source-lang ${src_l} --target-lang ${tgt_l} ${R2LArgs} \
     --quiet \
     --decode-source-file ${FullSourceFile} \
 	--decode-output-file ${FullOutputFile} \
-	--skip-invalid-size-inputs-valid-test  ${RemoveBPEArgs}\
+	--skip-invalid-size-inputs-valid-test  ${RemoveBPEArgs} \
 	--decode-to-file
     2>&1 | tee -a ${LogFilename}
 set +x

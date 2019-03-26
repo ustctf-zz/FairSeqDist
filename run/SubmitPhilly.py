@@ -13,11 +13,11 @@ user = 'fetia'
 with open(r'C:\Users\fetia\pwd','r') as f:
     pwd=f.read()
 
-hdfs_mapping={'eu1':'gfs',
+vc_maps={'eu1':'nextmsra',
             'eu2':'gfs',
-            'sc1':'gfs',
-            'wu2':'gfs',
-            'rr1':'hdfs',
+            'sc3':'resrchprojvc3',
+            'wu2':'msrmt',
+            'rr1':'sdrgvc',
             }
 
 def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 4096,
@@ -62,7 +62,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "MinGPUs": ngpus,
     "PrevModelPath": None,
     'ExtraParams':"-d {} --dataset {} --warm-update {} -M {} --uf {} -E {} --nodes {} --port {} -s {} --nproc {} "
-                  "-A {}  -LR {} -LRS {} -SI 2 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
+                  "-A {}  -LR {} -LRS {} -SI 1 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
                   "{} {} --src {} --tgt {} {} -UC {}".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
@@ -94,13 +94,13 @@ def submit():
     world_size = 2 #number of machines you need
     ngpupernode = 4 #number of gpus you need on each machine
 
-    nccl = False #better not change
+    nccl = True #better not change
     old_docker = False # better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
-    vc = "msrmt" #vc you run your jobs
-    cluster = "wu2" #cluster you run your jobs
+    #vc = "msrmt" #vc you run your jobs
+    #cluster = "wu2" #cluster you run your jobs
 
-    #vc = "resrchprojvc3"  # vc you run your jobs
-    #cluster = "sc3"  # cluster you run your jobs
+    cluster = "wu2"  # cluster you run your jobs
+    vc = vc_maps[cluster]  # vc you run your jobs
     c10d = False
 
     '''Training config'''
@@ -114,7 +114,7 @@ def submit():
     cosine_period = 35000
     warm_updates = 4000
     save_updates = 0
-    log_interval = 200
+    log_interval = 150
     dataset = "wmt19.tokenized.en-fi.joined"
     #dataset = "wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined"
     arch = "transformer_wmt_en_de_big"
@@ -130,7 +130,7 @@ def submit():
     reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed2561_maxtok4096_uf16_lr0.0005_enc6_dec6_frlbsee2--r2l"
     #reloaddir = "FiEnR2L"
 
-    expname = 'frlbsee2_cont'
+    expname = 'frlbsee2_cont_nc'
     extra = expname
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,

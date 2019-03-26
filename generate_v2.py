@@ -159,6 +159,7 @@ def decode_from_dataset(models, task, args, use_cuda, output_filename=None):
                 align_dict=align_dict,
                 tgt_dict=tgt_dict,
                 remove_bpe=args.remove_bpe,
+                reverse=args.recover_l2r and args.r2l,
             )
 
             if not args.quiet:
@@ -235,7 +236,7 @@ def decode_from_file(models, task, args, use_cuda, source_filename=None,
 
     # Load dataset (possibly sharded)
     dataset = data.LanguagePairDataset(
-        src_tokens, src_sizes, src_dict, tgt_tokens, tgt_sizes, tgt_dict, shuffle=False, r2l=args.r2l)
+        src_tokens, src_sizes, src_dict, tgt_tokens, tgt_sizes, tgt_dict, shuffle=False, r2l = args.r2l)
     itr = task.get_batch_iterator(
         dataset=dataset,
         max_tokens=args.max_tokens,
@@ -313,6 +314,7 @@ def decode_from_file(models, task, args, use_cuda, source_filename=None,
                 align_dict=align_dict,
                 tgt_dict=tgt_dict,
                 remove_bpe=args.remove_bpe,
+                reverse=args.recover_l2r and args.r2l,
             )
             if i == 0:
                 if args.score_reference:

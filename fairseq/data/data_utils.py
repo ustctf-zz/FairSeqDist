@@ -81,6 +81,8 @@ def collate_tokens(values, pad_idx, eos_idx, left_pad, move_eos_to_beginning=Fal
 
 def reverse_tokens(sent):
     """assume the sent is a 1D tensor ending with EOS"""
+    if sent is None:
+        return sent
     val = sent.flip(0)
     sent[-1] = val[0]
     sent[:-1] = val[1:]

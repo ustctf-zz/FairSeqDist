@@ -32,6 +32,10 @@ SaveInterval=1
 SaveIntervalUpdates=10000
 enc=6
 dec=6
+SrcLan="en"
+TgtLan="fi"
+UpdateCode=false
+R2LArgs=""
 
 Generate="false"
 
@@ -93,6 +97,14 @@ while [ "$1" != "" ]; do
 			;;
 		--nccl )
 			DistBackEnd="nccl"
+			;;
+		--src )
+			shift
+			SrcLan=$1
+			;;
+		--tgt )
+			shift
+			TgtLan=$1
 			;;
 		--fp16 )
 			FP16=true
@@ -200,7 +212,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
 	--nnodes=${Nnodes} --node_rank=${OMPI_COMM_WORLD_RANK} --master_addr="192.168.1.1" \
     --master_port=1234 \
 	${ProjectDir}/train.py \
-	--ddp-backend ${DdpBackend} --philly-vc ${PHILLY_VC} \
+	--ddp-backend ${DdpBackend} \
 	${FP16Args} \
 	${DataDir}/${Dataset} \
     --arch ${Arch} \
@@ -215,9 +227,9 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --no-progress-bar \
     ${no_epoch_checkpoints} \
     --save-dir ${FullSaveDir} \
-    --log-interval ${LogInterval} \
+    --log-interval ${LogInterval} --source-lang ${SrcLan}  --target-lang ${TgtLan} ${R2LArgs} \
     --save-interval ${SaveInterval} --save-interval-updates ${SaveIntervalUpdates} --keep-interval-updates 0 \
-	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} --distributed-init-method ${DistFilename} \
+	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} \
     2>&1 | tee ${LogDir}/${LogFilename}-train.log.txt
 set +x
 
