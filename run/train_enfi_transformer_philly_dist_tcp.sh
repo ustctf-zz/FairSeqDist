@@ -21,7 +21,7 @@ ShareEmb=""
 FP16=false
 DistWorldSize=8
 DistBackEnd="gloo"
-Nnodes=2
+Nnodes=1
 NProcPerNode=2
 LogInterval=50
 SaveInterval=1
@@ -263,6 +263,7 @@ if [ "$OMPI_COMM_WORLD_RANK" = "0" ]; then
 			OldPwd=$(pwd)
 			set -x
 			cd ${ProjectDir}
+			git reset --hard HEAD
 			git pull
 			cd ${OldPwd}
 			set +x

@@ -115,7 +115,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
 def submit():
 
     '''Distributed config'''
-    world_size = 2 #number of machines you need
+    world_size = 1 #number of machines you need
     ngpupernode = 8 #number of gpus you need on each machine
 
     nccl = True #better not change
@@ -137,8 +137,8 @@ def submit():
     lr_scheduler = "inverse_sqrt"
     cosine_period = 35000
     warm_updates = 4000
-    save_updates = 5
-    log_interval = 2
+    save_updates = 1500
+    log_interval = 200
     dataset = "wmt19.Round3ef4_rd2kdfe5_rd2bt.tokenized.en-fi.joined"
     #dataset = "wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined"
     arch = "transformer_wmt_en_de_big"
@@ -146,15 +146,15 @@ def submit():
     layers = 6
     dropout = 0.3
     reloaddir = ""
-    src = "fi"
-    tgt = 'en'
+    src = "en"
+    tgt = 'fi'
     r2l = False
     #reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed4726_maxtok4096_uf16_lr0.00052_enc6_dec6_erlbsef2--r2l"
     #reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed9128_maxtok4096_uf11_lr0.0005_enc6_dec6_erlbsef--r2l"
-    reloaddir = "3rd_fe_start_fe3rd2"
+    reloaddir = "3rd_ef_start_ef2rd2"
     #reloaddir = "FiEnR2L"
     blob = True
-    expname = '3rdfe_bl'
+    expname = '3rdef_bl_wm'
     extra = expname
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,

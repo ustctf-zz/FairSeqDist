@@ -300,7 +300,7 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
             end_of_epoch and not args.no_epoch_checkpoints and
             epoch % args.save_interval == 0
     )
-    checkpoint_conds['checkpoint_{}_{}.pt'.format(epoch, updates)] = (
+    checkpoint_conds['checkpoint_{}.pt'.format(updates)] = (
             not end_of_epoch and args.save_interval_updates > 0 and
             updates % args.save_interval_updates == 0
     )
