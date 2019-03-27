@@ -36,6 +36,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     print('Using seed {} and port {}'.format(seed, port))
 
     def getConfigFile():
+        #return "/blob/fetia/Src/clone_blob.sh"
         blob_ = "/blob/" if blob else ""
         prefix = "fetia/Src/{}/run/".format("fairseq_latest" if cluster == "wu2" else "FairSeqDist")
         #config_name = "train_enfi_transformer_philly_{}.sh".format("dist_tcp" if nnodes > 1 else "single")
@@ -66,7 +67,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     "PrevModelPath": None,
     'ExtraParams':"-d {} --dataset {} --warm-update {} -M {} --uf {} -E {} --nodes {} --port {} -s {} --nproc {} "
                   "-A {}  -LR {} -LRS {} -SI 1 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
-                  "{} {} --src {} --tgt {} {} -UC "
+                  "{} {} --src {} --tgt {} {} "
                   "{} {}".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
@@ -138,7 +139,7 @@ def submit():
     cosine_period = 35000
     warm_updates = 4000
     save_updates = 1500
-    log_interval = 200
+    log_interval = 300
     dataset = "wmt19.Round3ef4_rd2kdfe5_rd2bt.tokenized.en-fi.joined"
     #dataset = "wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined"
     arch = "transformer_wmt_en_de_big"
@@ -150,11 +151,12 @@ def submit():
     tgt = 'fi'
     r2l = False
     #reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed4726_maxtok4096_uf16_lr0.00052_enc6_dec6_erlbsef2--r2l"
-    #reloaddir = "wmt19.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed9128_maxtok4096_uf11_lr0.0005_enc6_dec6_erlbsef--r2l"
     reloaddir = "3rd_ef_start_ef2rd2"
+    #reloaddir = "3rd_fe_start_fe3rd2"
     #reloaddir = "FiEnR2L"
     blob = True
     expname = '3rdef_bl_wm'
+    #expname = 'clone_blob'
     extra = expname
 
     post(dataset=dataset, vc=vc, cluster=cluster, name = expname, nprocs= ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,

@@ -305,7 +305,7 @@ python -m torch.distributed.launch --nproc_per_node=${NProcPerNode} \
     --save-dir ${FullSaveDir} \
     --log-interval ${LogInterval} \
     --save-interval ${SaveInterval} --save-interval-updates ${SaveIntervalUpdates} --keep-interval-updates 0 \
-	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} --master-address-file ${DistFilename} \
+	--dropout ${dropout} --seed ${seed} --distributed-backend ${DistBackEnd} \
 	--source-lang ${SrcLan}  --target-lang ${TgtLan} ${R2LArgs} 
     #2>&1 | tee ${LogDir}/${LogFilename}-train.log.txt
 set +x
