@@ -321,13 +321,11 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
         extra_state.update({'best': save_checkpoint.best})
 
     checkpoints = [os.path.join(args.save_dir, fn) for fn, cond in checkpoint_conds.items() if cond]
-    #print('Rank {}, entering the cycle of saving ckpt {}'.format(args.distributed_rank, checkpoints[0]))
     if len(checkpoints) > 0:
         for cp in checkpoints:
             tmp_file = '{}.tmp'.format(cp)
             if distributed_utils.is_master(args):
                 trainer.save_checkpoint(cp, extra_state)
-                print('Master rank, completed saving ckpt {}'.format(cp))
                 time.sleep(5)
                 with open(tmp_file, 'w') as fout:
                     fout.write('I have completed saving {}'.format(cp))
@@ -355,8 +353,6 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
 
     if distributed_utils.is_master(args):
         print('Saving ckpt {} cycle uses {} seconds'.format(checkpoints[0], save_tm.elapsed_time))
-    #else:
-    #    print('I am rank {}, waited for {} seconds for the cycle {}'.format(args.distributed_rank, save_tm.elapsed_time, checkpoints[0]))
 
 
 def load_checkpoint(args, trainer, epoch_itr):
