@@ -7,7 +7,7 @@ from fairseq import options
 
 def obtain_sys_argv():
     def if_illegal_args(str_check):
-        illegal_args_names = ['--ckpt', '--initial']
+        illegal_args_names = ['--ckpt', '--initial', '--generate', '--decokenizer', '--sacre-test']
         return any([x in str_check for x in illegal_args_names])
     sys_args = ' '.join([x for (idx, x) in enumerate(sys.argv[1:]) if not if_illegal_args(x) and not if_illegal_args(sys.argv[idx])])
     return sys_args
