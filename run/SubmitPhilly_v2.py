@@ -20,10 +20,75 @@ vc_maps={'eu1':'nextmsra',
             'rr1':'sdrgvc',
             }
 
-def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = False, log_interval = 50, max_toks = 4096, net_code = "",
-         uf = 32, lr = 0.0005, max_lr = 0.0005, warm_updates = 4000, arch = "transformer_wmt_en_de_big", layers = 6, dropout = 0.3, reload_dir = "",
-         lr_scheduler = "inverse_sqrt", cosine_period = 40000, extra = "", save_interval_updates = 0, src = "en", tgt = "fi", r2l = False, c10d = False,
-         blob = False, is_gen = False, update_code = False, gen_alpha = 1.2):
+base_job_args = {
+    'cluster': 'sc3',
+    'blob': True,
+    'nprocs': 8,
+    'nnodes': 1,
+    'nccl': True,
+    'c10d': False,
+
+    'dataset': 'wmt19.tokenized.en-fi.joined',
+    'src': 'en',
+    'tgt': 'fi',
+    'r2l': False,
+
+    'save_interval_updates': 0,
+    'log_interval': 150,
+    'max_toks': 2560,
+    'dropout': 0.3,
+
+    'lr': 0.0005,
+    'lr_scheduler': 'inverse_sqrt',
+    'warm_updates': 4000,
+
+    'net_code': "",
+    'arch': 'transformer_wmt_en_de_big',
+    'layers': 6,
+
+    'update_code': False,
+    'is_gen': False,
+    'gen_alpha': 1.2,
+}
+
+def post(**kwargs):
+
+    cluster = kwargs.get('cluster', 'wu2')
+    vc = kwargs.get('vc', vc_maps[cluster])
+    blob = kwargs.get('blob', True)
+    name = kwargs.get('name')
+    nprocs = kwargs.get('nprocs', 4)
+    nnodes = kwargs.get('nnodes', 1)
+    nccl = kwargs.get('nccl', True)
+    c10d = kwargs.get('c10d', False)
+
+    dataset = kwargs.get('dataset')
+    src = kwargs.get('src', "en")
+    tgt = kwargs.get('tgt', "fi")
+    r2l = kwargs.get('r2l', False)
+
+    reload_dir = kwargs.get('reload_dir', "")
+    save_interval_updates = kwargs.get('save_interval_updates', 0)
+    log_interval = kwargs.get('log_interval', 50)
+    max_toks = kwargs.get('max_toks', 4096)
+    uf = kwargs.get('uf', 32)
+    dropout = kwargs.get('dropout', 0.3)
+
+    lr = kwargs.get('lr', 0.0005)
+    lr_scheduler = kwargs.get('lr_scheduler', "inverse_sqrt")
+    cosine_period = kwargs.get('cosine_period', 40000)
+    max_lr = kwargs.get('max_lr', 0.0005)
+    warm_updates = kwargs.get('warm_updates', 4000)
+
+    net_code = kwargs.get('net_code', "")
+    arch = kwargs.get('arch',"transformer_wmt_en_de_big")
+    layers = kwargs.get('layers', 6)
+
+    extra = kwargs.get('extra', "")
+    update_code = kwargs.get('update_code', False)
+
+    is_gen = kwargs.get('is_gen', False)
+    gen_alpha = kwargs.get('gen_alpha', 1.2)
 
     assert not is_gen or reload_dir != ""
     nas = net_code != ""
@@ -35,9 +100,7 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
 
     ngpus = nprocs * nnodes
     seed = random.randint(500, 9999)
-    #seed = 9337
     port = random.randint(1000, 9999)
-    #port = 1678
     is_cosine = lr_scheduler == "cosine"
     cosine_command = "-MLR {} -CP {}".format(max_lr, cosine_period)
 
@@ -91,23 +154,23 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
                   "{} ".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
-               "-RD {}".format(reload_dir) if reload_dir != "" else "", cosine_command if is_cosine else "", src, tgt, "--r2l" if r2l else "",
-               "--c10d" if c10d else "", "-BLOB" if blob else "", "-UC" if update_code else "", "--alpha {}".format(gen_alpha) if is_gen else "",
+               "-RD {}".format(reload_dir) if reload_dir != " " else "", cosine_command if is_cosine else "", src, tgt, "--r2l" if r2l else "",
+               "--c10d" if c10d else "", "-BLOB" if blob else "", "-UC" if update_code else " ", "--alpha {}".format(gen_alpha) if is_gen else "",
                "-N usr_net_code/{}".format(net_code) if nas else ""),
     "SubmitCode": "p",
     "IsMemCheck": False,
     "IsCrossRack": False,
     "Registry": "phillyregistry.azurecr.io",
     "Repository": "philly/jobs/custom/pytorch",
-    "Tag": "fairseq-0.6.0.0.4.1" if docker_old else "fairseq-0.6.0",
+    "Tag": "fairseq-0.6.0",
     "OneProcessPerContainer": True,
     "DynamicContainerSize": False,
     "NumOfContainers": nnodes,
-    #"CustomMPIArgs": 'env NCCL_DEBUG=INFO NCCL_IB_DISABLE=0 NCCL_SOCKET_IFNAME=^docker0',
-    #"CustomMPIArgs":  'env NCCL_DEBUG=INFO',
     "CustomMPIArgs": 'env OMPI_MCA_BTL=self,sm,tcp,openib',
     "Timeout": None
     }
+
+    print(job)
 
     if blob:
         job['volumes'] = {
@@ -134,73 +197,40 @@ def post(dataset, vc, name, nprocs, cluster, nnodes, docker_old = False, nccl = 
     headers = {'Content-Type':'application/json'}
     requests.post(url, headers=headers, data=job, auth=HttpNtlmAuth(user, pwd), verify=False)
 
+job_pools = {
+    'ef_ls_transf_combo_base':
+        {'net_code': 'e6_lstm3_d6_lstm.json',
+         'reload_dir': 'wmt19.tokenized.en-fi.joined_nas_transformer_wmt_en_de_big_nc_e6_lstm3_d6_lstm_dp0.3_seed884_maxtok3072_lr0.001_SI1_ef_ls_transf_nc_1.0',
+        'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.001, 'warm_updates': 8000, 'max_toks': 3072},
+    'fe_ls_transf_combo_base':
+        {'net_code': 'e6_lstm3_d6_lstm.json',
+         'reload_dir': 'wmt19_fien_lstm_combo_transf',
+          'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.001, 'warm_updates': 8000, 'max_toks': 2560, 'src': 'fi', 'tgt': 'en'},
+    'ef_rl_bt':
+        {
+            'reload_dir': 'EnFiR2LBT1', 'dataset': 'wmt19.r2l.bt1.tokenized.fi-en.joined', 'log_interval': 100, 'r2l': True,
+        },
+}
+
+def getJobConfigs(name = "", train = True):
+    if name not in job_pools:
+        raise Exception('name {} not in job pools'.format(name))
+    job_config = {**base_job_args, **job_pools[name]}
+    job_config['is_gen'] = not train
+    job_config['name'] = '{}.{}'.format('tr' if train else 'ge', name)
+    if not train:
+        assert 'reload_dir' in job_config and job_config['reload_dir'] != ''
+    else:
+        job_config['uf'] = 4 * 4096 * 32 // (job_config['max_toks'] * job_config['world_size'] * job_config['ngpupernode'])
+    job_config['extra'] = name
+    return job_config
+
 def submit():
 
-    is_gen = True
-    '''Distributed config'''
-    world_size = 1 #number of machines you need
-    ngpupernode = 8 #number of gpus you need on each machine
-
-    nccl = True #better not change
-    old_docker = False # better not change. Changing to true will be in-stable. But if you are running 2*4 jobs, it is fairly stable and might even be 15% faster than setting it to False.
-    #cluster = "wu2" #cluster you run your jobs
-
-    cluster = "sc3"  # cluster you run your jobs
-    vc = vc_maps[cluster]  # vc you run your jobs
-    c10d = False
-
-    '''Training config'''
-    max_toks = 2560
-    uf = 4 * 4096 * 32 // (max_toks * world_size * ngpupernode)
-    print('uf', uf)
-
-    lr = 0.0005
-    max_lr = 0.0005
-    lr_scheduler = "inverse_sqrt"
-    cosine_period = 35000
-    warm_updates = 4000
-    save_updates = 0
-    log_interval = 100
-    #dataset = "wmt19.Round3ef4_rd2kdfe5_rd2bt.tokenized.en-fi.joined"
-    #dataset = "wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined"
-    #dataset = "wmt19.tokenized.en-fi.joined"
-    #dataset = "wmt19.r2l.bt1.tokenized.fi-en.joined"
-    dataset = "wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined"
-
-    #arch = "nas_transformer_wmt_en_de_big"
-    arch = "transformer_vaswani_wmt_en_de_big"
-    #usr_code = "e6_lstm3_d6_lstm6.json"
-    #usr_code = "e6_lstm3_d6_lstm.json"
-    usr_code = ""
-
-    layers = 6
-    dropout = 0.3
-    reloaddir = ""
-    src = "fi"
-    tgt = 'en'
-    r2l = True
-    alpha = 1.2
-    reloaddir = "wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed5334_maxtok2560_uf25_lr0.0005_enc6_dec6_rl_rd2_fe--r2l"
-    #reloaddir = "3rd_fe_start_fe3rd2"
-    #reloaddir = "3rd_ef_start_ef2rd2"
-    #reloaddir = "EnFiR2LBT1"
-    #reloaddir = "wmt19_fien_lstm_combo_transf"
-    #reloaddir = "wmt19.tokenized.en-fi.joined_nas_transformer_wmt_en_de_big_nc_e6_lstm3_d6_lstm_dp0.3_seed884_maxtok3072_lr0.001_SI1_ef_ls_transf_nc_1.0"
-    #reloaddir = "wmt19_enfi_lstm_more_combo_transf"
-
-    blob = False
-    #expname = 'bf-fe_ls_tranf_combo_cont'
-    #expname = 'ef_arcs_combo2'
-    #expname = 'gen_fe_ls_tranf_combo'
-    #expname = 'gen_3rd_fe'
-    expname = 'gen_2rd_r2l'
-    extra = expname
-
-    update_code = False
-    post(dataset = dataset, vc=vc, cluster=cluster, name = expname, nprocs = ngpupernode, nnodes= world_size, docker_old = old_docker, nccl= nccl,
-         log_interval= log_interval, max_toks= max_toks, uf= uf, lr = lr, max_lr = max_lr, lr_scheduler = lr_scheduler, warm_updates= warm_updates,
-         arch= arch, layers = layers, dropout = dropout, reload_dir = reloaddir, cosine_period= cosine_period, save_interval_updates= save_updates,
-         extra= extra, src= src, tgt= tgt , r2l = r2l, c10d = c10d, blob = blob, is_gen = is_gen, update_code = update_code, net_code= usr_code, gen_alpha = alpha)
+    job_name = "fe_ls_transf_combo_base"
+    train = False
+    job_args = getJobConfigs(job_name, train)
+    post(**job_args)
 
 
 if __name__=='__main__':
