@@ -9,6 +9,8 @@
 Translate pre-processed data with a trained model.
 """
 
+from __future__ import  print_function
+
 import torch
 
 from fairseq import bleu, data, options, progress_bar, tasks, tokenizer, utils

@@ -34,11 +34,11 @@ def main(args):
         #Note here, simply calling single_model_main will bring mysterious memory error, so use bruteforce calling instead
         #single_model_main(args)
         decode_out_file = '{}/tmp.txt'.format(args.generate_code_path)
+        command = 'python {}/generate.py --path {} --output-file {} {}'.format(args.generate_code_path, os.path.join(args.ckpt_dir, ckpt_file), decode_out_file,
+                       obtain_sys_argv())
+        print(command)
         subprocess.Popen(
-            'python {}/generate.py --path {} --output-file {} '
-            '{}'.
-                format(args.generate_code_path, os.path.join(args.ckpt_dir, ckpt_file), decode_out_file,
-                       obtain_sys_argv()),
+            command,
             shell=True,
             stdout=subprocess.PIPE)
         pl_process = subprocess.Popen(
