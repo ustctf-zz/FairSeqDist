@@ -14,6 +14,7 @@ def obtain_sys_argv():
 
 def main(args):
     print(args)
+    sys.stdout.flush()
     files = [os.path.join(args.ckpt_dir, x) for x in os.listdir(args.ckpt_dir) if x.endswith('.pt')]
     files.sort(key=lambda x: os.path.getmtime(x))
 
@@ -32,11 +33,15 @@ def main(args):
         args.path = ckpt_file
         if not ckpt_file.endswith(".pt"):
             continue
+        print('Scoring ckpt {}'.format(ckpt_file))
+        sys.stdout.flush()
         #Note here, simply calling single_model_main will bring mysterious memory error, so use bruteforce calling instead
         #single_model_main(args)
         decode_out_file = '{}/tmp.txt'.format(args.generate_code_path)
         command = 'python {}/generate.py --path {} --output-file {} {}'.format(args.generate_code_path, os.path.join(args.ckpt_dir, ckpt_file), decode_out_file,
                        obtain_sys_argv())
+        print(command)
+        sys.stdout.flush()
         subprocess.Popen(
             command,
             shell=True,
@@ -53,8 +58,10 @@ def main(args):
         bleu_match = re.search(sacre_bleu_ptn, str(pl_output))
         if bleu_match:
             bleu_score = bleu_match.group(1)
-            print(ckpt_file, bleu_score)
-            results[ckpt_file] = bleu_score
+            filename = os.path.basename(ckpt_file)
+            print(filename, bleu_score)
+            sys.stdout.flush()
+            results[filename] = bleu_score
             sys.stdout.flush()
         time.sleep(15)
 

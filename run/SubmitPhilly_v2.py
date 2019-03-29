@@ -49,6 +49,7 @@ base_job_args = {
     'update_code': False,
     'is_gen': False,
     'gen_alpha': 1.2,
+    'initial_model': "",
 }
 
 def post(**kwargs):
@@ -89,6 +90,7 @@ def post(**kwargs):
 
     is_gen = kwargs.get('is_gen', False)
     gen_alpha = kwargs.get('gen_alpha', 1.2)
+    initial_model = kwargs.get('initial_model', None)
 
     assert not is_gen or reload_dir != ""
     nas = net_code != ""
@@ -151,12 +153,12 @@ def post(**kwargs):
                   "-A {}  -LR {} -LRS {} -SI 1 --max-update 300000 -SIU {} --enc {} --dec {} -LI {} {} "
                   "{} {} --src {} --tgt {} {} {}"
                   "{} {} {} "
-                  "{} ".
+                  "{} {} ".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
                "-RD {}".format(reload_dir) if reload_dir != " " else "", cosine_command if is_cosine else "", src, tgt, "--r2l" if r2l else "",
                "--c10d" if c10d else "", "-BLOB" if blob else "", "-UC" if update_code else " ", "--alpha {}".format(gen_alpha) if is_gen else "",
-               "-N usr_net_code/{}".format(net_code) if nas else ""),
+               "-N usr_net_code/{}".format(net_code) if nas else "", "-I {}".format(initial_model) if initial_model is not None else ""),
     "SubmitCode": "p",
     "IsMemCheck": False,
     "IsCrossRack": False,
@@ -223,10 +225,10 @@ job_pools = {
         },
 }
 
-def getJobConfigs(name = "", train = True, update_code = False):
+def getJobConfigs(name = "", train = True, **kwargs):
     if name not in job_pools:
         raise Exception('name {} not in job pools'.format(name))
-    job_config = {**base_job_args, **job_pools[name]}
+    job_config = {**base_job_args, **job_pools[name], **kwargs}
     job_config['is_gen'] = not train
     job_config['name'] = '{}.{}'.format('tr' if train else 'ge', name)
     if not train:
@@ -234,14 +236,19 @@ def getJobConfigs(name = "", train = True, update_code = False):
     else:
         job_config['uf'] = 4 * 4096 * 32 // (job_config['max_toks'] * job_config['nnodes'] * job_config['nprocs'])
     job_config['extra'] = name
-    job_config['update_code'] = update_code
     return job_config
 
 def submit():
 
-    job_name = "fe_ls_transf_combo_base"
+    specific_args = {
+        'update_code': True,
+        'initial_model': "checkpoint53.pt",
+        'gen_alpha': 1.2
+    }
+
+    job_name = "ef_ls_transf_combo_base"
     train = False
-    job_args = getJobConfigs(job_name, train, update_code= False)
+    job_args = getJobConfigs(job_name, train, **specific_args)
     post(**job_args)
 
 
