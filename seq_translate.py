@@ -18,7 +18,7 @@ def main(args):
     files.sort(key=lambda x: os.path.getmtime(x))
 
     start_idx = 0
-    if args.initial_model is not None:
+    if args.initial_model is not None and args.initial_model is not "":
         initial_model = os.path.join(args.ckpt_dir, args.initial_model)
         for (idx, file) in enumerate(files):
             if file == initial_model:
@@ -26,6 +26,7 @@ def main(args):
 
     bleu_ptn = 'BLEU4\s=\s([\d\.]+?),'
     sacre_bleu_ptn = 'BLEU\+case.+?=\s([\d\.]+?)\s.+'
+    results = {}
     for x in range(start_idx, len(files)):
         ckpt_file = files[x]
         args.path = ckpt_file
@@ -36,11 +37,10 @@ def main(args):
         decode_out_file = '{}/tmp.txt'.format(args.generate_code_path)
         command = 'python {}/generate.py --path {} --output-file {} {}'.format(args.generate_code_path, os.path.join(args.ckpt_dir, ckpt_file), decode_out_file,
                        obtain_sys_argv())
-        print(command)
         subprocess.Popen(
             command,
             shell=True,
-            stdout=subprocess.PIPE)
+            stdout=subprocess.PIPE).communicate()
         pl_process = subprocess.Popen(
             'cat {} | perl {} -l {} | sacrebleu -t {} -l {}-{} -w 2 '.
                 format(decode_out_file, args.decokenizer, args.target_lang, args.sacre_test_set, args.source_lang, args.target_lang),
@@ -54,8 +54,11 @@ def main(args):
         if bleu_match:
             bleu_score = bleu_match.group(1)
             print(ckpt_file, bleu_score)
+            results[ckpt_file] = bleu_score
             sys.stdout.flush()
         time.sleep(15)
+
+    print('\n'.join(['{}\t{}'.format(x, y) for (x,y) in results.items()]))
 
 def add_user_extra_generation_args(parser):
     parser.add_argument('--generate-code-path', default="/var/storage/shared/msrmt/fetia/yiren/fairseq/",

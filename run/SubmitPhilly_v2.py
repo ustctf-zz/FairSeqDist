@@ -198,6 +198,14 @@ def post(**kwargs):
     requests.post(url, headers=headers, data=job, auth=HttpNtlmAuth(user, pwd), verify=False)
 
 job_pools = {
+    'fe_r2l_on_2ndbt':
+        {
+          'dataset': 'wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined',
+            'reload_dir': 'wmt19.Round2ef2kdfe5bt.tokenized.en-fi.joined_transformer_wmt_en_de_big_dp0.3_seed5334_maxtok2560_uf25_lr0.0005_enc6_dec6_rl_rd2_fe--r2l',
+            'r2l': True,
+            'src': 'fi', 'tgt': 'en',
+            'blob': False,
+        },
     'ef_ls_transf_combo_base':
         {'net_code': 'e6_lstm3_d6_lstm.json',
          'reload_dir': 'wmt19.tokenized.en-fi.joined_nas_transformer_wmt_en_de_big_nc_e6_lstm3_d6_lstm_dp0.3_seed884_maxtok3072_lr0.001_SI1_ef_ls_transf_nc_1.0',
@@ -205,14 +213,17 @@ job_pools = {
     'fe_ls_transf_combo_base':
         {'net_code': 'e6_lstm3_d6_lstm.json',
          'reload_dir': 'wmt19_fien_lstm_combo_transf',
-          'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.001, 'warm_updates': 8000, 'max_toks': 2560, 'src': 'fi', 'tgt': 'en'},
-    'ef_rl_bt':
+          'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.001, 'warm_updates': 8000, 'max_toks': 2560, 'src': 'fi', 'tgt': 'en',
+         'gen_alpha': 1.6,
+         },
+
+    'ef_rl_bt1':
         {
-            'reload_dir': 'EnFiR2LBT1', 'dataset': 'wmt19.r2l.bt1.tokenized.fi-en.joined', 'log_interval': 100, 'r2l': True,
+            'reload_dir': 'EnFiR2LBT1', 'dataset': 'wmt19.r2l.bt1.tokenized.en-fi.joined', 'log_interval': 200, 'r2l': True,
         },
 }
 
-def getJobConfigs(name = "", train = True):
+def getJobConfigs(name = "", train = True, update_code = False):
     if name not in job_pools:
         raise Exception('name {} not in job pools'.format(name))
     job_config = {**base_job_args, **job_pools[name]}
@@ -221,15 +232,16 @@ def getJobConfigs(name = "", train = True):
     if not train:
         assert 'reload_dir' in job_config and job_config['reload_dir'] != ''
     else:
-        job_config['uf'] = 4 * 4096 * 32 // (job_config['max_toks'] * job_config['world_size'] * job_config['ngpupernode'])
+        job_config['uf'] = 4 * 4096 * 32 // (job_config['max_toks'] * job_config['nnodes'] * job_config['nprocs'])
     job_config['extra'] = name
+    job_config['update_code'] = update_code
     return job_config
 
 def submit():
 
     job_name = "fe_ls_transf_combo_base"
     train = False
-    job_args = getJobConfigs(job_name, train)
+    job_args = getJobConfigs(job_name, train, update_code= False)
     post(**job_args)
 
 
