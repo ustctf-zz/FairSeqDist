@@ -7,7 +7,7 @@ from fairseq import options
 
 def obtain_sys_argv():
     def if_illegal_args(str_check):
-        illegal_args_names = ['--ckpt', '--initial', '--generate', '--decokenizer', '--sacre-test']
+        illegal_args_names = ['--ckpt', '--initial', '--generate', '--decokenizer', '--sacre-test', '--store-testfiles', '--decode-to-file']
         return any([x in str_check for x in illegal_args_names])
     sys_args = ' '.join([x for (idx, x) in enumerate(sys.argv[1:]) if not if_illegal_args(x) and not if_illegal_args(sys.argv[idx])])
     return sys_args
@@ -37,14 +37,14 @@ def main(args):
         print('Scoring ckpt {}'.format(ckpt_file))
         sys.stdout.flush()
         #Note here, simply calling single_model_main will bring mysterious memory error, so use bruteforce calling instead
-        decode_out_file = '{}/tmp.txt'.format(args.ckpt_dir)
+        decode_out_file = '{}/tmp{}.txt'.format(args.ckpt_dir, args.sacre_test_set)
         code_file = "generate.py" if args.sacre_test_set == "wmt18" else "generate_v2.py"
 
         command = 'python {}/{} --path {} ' \
-                  '--output-file {} ' \
+                  '--output-file {} {} ' \
                   '{} ' \
                   '{}'.format(args.generate_code_path, code_file, os.path.join(args.ckpt_dir, ckpt_file),
-                              decode_out_file,
+                              decode_out_file, "--decode-to-file" if args.sacre_test_set != "wmt18" else "",
                             '--decode-source-file {}/{}'.format(args.store_testfiles_path, '{}.test.en-fi.{}'.format(args.sacre_test_set, args.source_lang)) if args.sacre_test_set != 'wmt18' else '',
                             obtain_sys_argv())
         print(command)
@@ -53,7 +53,7 @@ def main(args):
             command,
             shell=True,
             stdout=subprocess.PIPE).communicate()
-        time.sleep(15)
+        time.sleep(5)
         pl_process = subprocess.Popen(
             'cat {} | perl {} -l {} | sacrebleu -t {} -l {}-{} -w 2 '.
                 format(decode_out_file, args.decokenizer, args.target_lang, args.sacre_test_set, args.source_lang, args.target_lang),

@@ -57,6 +57,7 @@ base_job_args = {
     'update_code': False,
     'job_mode': JobMode.TRAIN,
     'gen_alpha': 1.2,
+    'gen_subset': 'wmt18',
     'initial_model': "",
     'sample_batch_size': 1024,
 }
@@ -102,6 +103,7 @@ def post(**kwargs):
 
     job_mode = kwargs.get('job_mode', JobMode.TRAIN)
     gen_alpha = kwargs.get('gen_alpha', 1.2)
+    gen_subset = kwargs.get('gen_subset', 'wmt18')
     initial_model = kwargs.get('initial_model', None)
     sdp = kwargs.get('sdp', None)
     source_file = kwargs.get('sample_source_file', None)
@@ -168,13 +170,13 @@ def post(**kwargs):
                   "{} {} --src {} --tgt {} {} {}"
                   "{} {} {} "
                   "{} {} {} "
-                  "{} {} --batch-size {} ".
+                  "{} {} --batch-size {} --gen-set {} ".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
                arch, lr, lr_scheduler, max_updates, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
                "-RD {}".format(reload_dir) if reload_dir != " " else "", cosine_command if is_cosine else "", src, tgt, "--r2l" if r2l else "",
                "--c10d" if c10d else "", "-BLOB" if blob else "", "-UC" if update_code else " ", "--alpha {}".format(gen_alpha) if job_mode is not JobMode.TRAIN else "",
                "-N usr_net_code/{}".format(net_code) if nas else "", "-I {}".format(initial_model) if initial_model is not None else "", "--sdp {}".format(sdp) if sdp is not None else "",
-               "--src-file {}".format(source_file) if source_file is not None else "", "--fp16" if fp16 else "", sample_bs
+               "--src-file {}".format(source_file) if source_file is not None else "", "--fp16" if fp16 else "", sample_bs, gen_subset,
                ),
     "SubmitCode": "p",
     "IsMemCheck": False,
@@ -435,9 +437,13 @@ job_pools = {
 def getJobConfigs(name = "", job_mode = JobMode.TRAIN, **kwargs):
     if name not in job_pools:
         raise Exception('name {} not in job pools'.format(name))
+
     job_config = {**base_job_args, **job_pools[name], **kwargs}
     job_config['job_mode'] = job_mode
     job_config['name'] = '{}.{}'.format('tr' if job_mode == JobMode.TRAIN else 'ge' if job_mode == JobMode.TEST else 'sam', name)
+    if (job_mode == JobMode.TEST):
+        job_config['name'] += job_config['gen_subset'][-2:]
+
     if(job_mode == JobMode.SAMPLE):
         job_config['name'] += '_' + job_config['sample_source_file']
     if job_mode is not JobMode.TRAIN:
@@ -454,14 +460,16 @@ def submit():
         'cluster': 'sc3',
         'sample_batch_size': 5120,
         'update_code': False,
-        'initial_model': "checkpoint62.pt",
+        'initial_model': "checkpoint100.pt",
         'gen_alpha': 1.2,
+        'gen_subset': 'wmt17',
         'sample_source_file': None,
         'sdp': "train.mono.filtered.bpe.1st_round.small"
     }
 
-    job_name = "fe_BT1_CNM_NormalLR"
+    job_name = "fe_bt1_rerun"
     job_mode = JobMode.TEST
+
     if job_mode is not JobMode.SAMPLE:
         job_args = getJobConfigs(job_name, job_mode, **specific_args)
         post(**job_args)
