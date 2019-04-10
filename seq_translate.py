@@ -24,6 +24,7 @@ def main(args):
         for (idx, file) in enumerate(files):
             if file == initial_model:
                 start_idx = idx
+                print('Staring from ckpt {}'.format(file))
 
     bleu_ptn = 'BLEU4\s=\s([\d\.]+?),'
     sacre_bleu_ptn = 'BLEU\+case.+?=\s([\d\.]+?)\s.+'
@@ -36,16 +37,23 @@ def main(args):
         print('Scoring ckpt {}'.format(ckpt_file))
         sys.stdout.flush()
         #Note here, simply calling single_model_main will bring mysterious memory error, so use bruteforce calling instead
-        #single_model_main(args)
-        decode_out_file = '{}/tmp.txt'.format(args.generate_code_path)
-        command = 'python {}/generate.py --path {} --output-file {} {}'.format(args.generate_code_path, os.path.join(args.ckpt_dir, ckpt_file), decode_out_file,
-                       obtain_sys_argv())
+        decode_out_file = '{}/tmp.txt'.format(args.ckpt_dir)
+        code_file = "generate.py" if args.sacre_test_set == "wmt18" else "generate_v2.py"
+
+        command = 'python {}/{} --path {} ' \
+                  '--output-file {} ' \
+                  '{} ' \
+                  '{}'.format(args.generate_code_path, code_file, os.path.join(args.ckpt_dir, ckpt_file),
+                              decode_out_file,
+                            '--decode-source-file {}/{}'.format(args.store_testfiles_path, '{}.test.en-fi.{}'.format(args.sacre_test_set, args.source_lang)) if args.sacre_test_set != 'wmt18' else '',
+                            obtain_sys_argv())
         print(command)
         sys.stdout.flush()
         subprocess.Popen(
             command,
             shell=True,
             stdout=subprocess.PIPE).communicate()
+        time.sleep(15)
         pl_process = subprocess.Popen(
             'cat {} | perl {} -l {} | sacrebleu -t {} -l {}-{} -w 2 '.
                 format(decode_out_file, args.decokenizer, args.target_lang, args.sacre_test_set, args.source_lang, args.target_lang),
@@ -63,13 +71,14 @@ def main(args):
             sys.stdout.flush()
             results[filename] = bleu_score
             sys.stdout.flush()
-        time.sleep(15)
 
     print('\n'.join(['{}\t{}'.format(x, y) for (x,y) in results.items()]))
 
 def add_user_extra_generation_args(parser):
     parser.add_argument('--generate-code-path', default="/var/storage/shared/msrmt/fetia/yiren/fairseq/",
                        type=str, metavar="PATH", help="path to generate.py")
+    parser.add_argument('--store-testfiles-path', default="/blob/fetia/Data/test_previous",
+                        type=str, metavar="PATH", help="path to store test files, including wmt15 to wmt18")
     parser.add_argument('--decokenizer', default="/blob/fetia/Src/mosesdecoder/scripts/tokenizer/detokenizer.perl",
                         type=str, metavar="PATH", help="path to detokenizer")
     parser.add_argument('--ckpt-dir', metavar='PATH',

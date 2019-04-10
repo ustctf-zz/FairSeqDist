@@ -72,7 +72,7 @@ def decode_from_dataset(models, task, args, use_cuda, output_filename=None):
     # (None if no unknown word replacement, empty if no path to align dictionary)
     align_dict = utils.load_align_dict(args.replace_unk)
 
-    output_filename = output_filename if output_filename is not None else args.decode_output_file
+    output_filename = output_filename if output_filename is not None else args.output_file
     if output_filename is not None:
         base_filename = output_filename
     else:
@@ -207,7 +207,7 @@ def decode_from_file(models, task, args, use_cuda, source_filename=None,
     # I/O files
     source_filename = source_filename if source_filename is not None else args.decode_source_file
     target_filename = target_filename if target_filename is not None else args.decode_target_file
-    output_filename = output_filename if output_filename is not None else args.decode_output_file
+    output_filename = output_filename if output_filename is not None else args.output_file
     if output_filename is not None:
         base_filename = output_filename
     else:
@@ -442,7 +442,7 @@ def add_user_extra_generation_args(parser, seq=False):
     # decode from file
     group.add_argument('--decode-source-file', default=None, type=str, metavar='FILE')
     group.add_argument('--decode-target-file', default=None, type=str, metavar='FILE')
-    group.add_argument('--decode-output-file', default=None, type=str, metavar='FILE')
+    #group.add_argument('--decode-output-file', default=None, type=str, metavar='FILE')
     group.add_argument('--decode-to-file', action="store_true")
     group.add_argument("--decode-to-index", action="store_true")
     group.add_argument('--delimiter', default="\n", type=str)
