@@ -54,15 +54,17 @@ def main(args):
             shell=True,
             stdout=subprocess.PIPE).communicate()
         time.sleep(5)
+        sacre_target_info = "-t {}".format(args.sacre_test_set) if args.sacre_test_set != "wmt19" \
+            else "{}/wmt19-{}{}.{}".format(args.store_testfiles_path, args.source_lang, args.target_lang, args.target_lang)
         pl_process = subprocess.Popen(
-            'cat {} | perl {} -l {} | sacrebleu -t {} -l {}-{} -w 2 '.
-                format(decode_out_file, args.decokenizer, args.target_lang, args.sacre_test_set, args.source_lang, args.target_lang),
+            'cat {} | perl {} -l {} | sacrebleu -l {}-{} -w 2 {} '.
+                format(decode_out_file, args.decokenizer, args.target_lang,  args.source_lang, args.target_lang, sacre_target_info),
             shell=True,
             stdout=subprocess.PIPE)
 
         pl_output = pl_process.stdout.read()
 
-        os.remove(decode_out_file)
+        #os.remove(decode_out_file)
         bleu_match = re.search(sacre_bleu_ptn, str(pl_output))
         if bleu_match:
             bleu_score = bleu_match.group(1)

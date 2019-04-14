@@ -40,6 +40,7 @@ base_job_args = {
     'tgt': 'fi',
     'r2l': False,
 
+    'save_interval': 1,
     'save_interval_updates': 0,
     'max_updates': 300000,
     'log_interval': 150,
@@ -81,6 +82,7 @@ def post(**kwargs):
 
     reload_dir = kwargs.get('reload_dir', "")
     save_interval_updates = kwargs.get('save_interval_updates', 0)
+    save_interval = kwargs.get('save_interval', 1)
     max_updates = kwargs.get('max_updates', 300000)
 
     log_interval = kwargs.get('log_interval', 50)
@@ -166,13 +168,13 @@ def post(**kwargs):
     "MinGPUs": ngpus,
     "PrevModelPath": None,
     'ExtraParams':" --dropout {} --dataset {} --warm-update {} -M {} --uf {} -E {} --nodes {} --port {} -s {} --nproc {} "
-                  "-A {}  -LR {} -LRS {} -SI 1 --max-update {} -SIU {} --enc {} --dec {} -LI {} {} "
+                  "-A {}  -LR {} -LRS {} -SI {} --max-update {} -SIU {} --enc {} --dec {} -LI {} {} "
                   "{} {} --src {} --tgt {} {} {}"
                   "{} {} {} "
                   "{} {} {} "
                   "{} {} --batch-size {} --gen-set {} ".
         format(dropout, dataset, warm_updates, max_toks, uf, extra, nnodes, port, seed, nprocs,
-               arch, lr, lr_scheduler, max_updates, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
+               arch, lr, lr_scheduler, save_interval, max_updates, save_interval_updates, layers, layers, log_interval, "--nccl" if nccl else "",
                "-RD {}".format(reload_dir) if reload_dir != " " else "", cosine_command if is_cosine else "", src, tgt, "--r2l" if r2l else "",
                "--c10d" if c10d else "", "-BLOB" if blob else "", "-UC" if update_code else " ", "--alpha {}".format(gen_alpha) if job_mode is not JobMode.TRAIN else "",
                "-N usr_net_code/{}".format(net_code) if nas else "", "-I {}".format(initial_model) if initial_model is not None else "", "--sdp {}".format(sdp) if sdp is not None else "",
@@ -306,12 +308,6 @@ job_pools = {
             'blob': False, 'nnodes': 4, 'nprocs': 4, 'dropout': 0.25, 'max_toks': 3072,
         },
 
-    'p_wu2_base_dist_blob':
-        {
-            'cluster': 'wu2','reload_dir': 'EnFiBaseWu2', 'dataset': 'wmt19.tokenized.en-fi.joined', 'log_interval': 1,
-            'blob': True, 'nnodes': 2, 'nprocs': 2, 'dropout': 0.25, 'max_toks': 3072, 'save_interval_updates': 8, 'max_updates': 25,
-        },
-
     'n_wu2_base_dist':
         {
             'cluster': 'wu2','reload_dir': 'FiEnBaseWu2', 'dataset': 'wmt19.tokenized.en-fi.joined', 'log_interval': 50, 'r2l': False, 'src': 'fi', 'tgt': 'en',
@@ -366,6 +362,26 @@ job_pools = {
                 'dropout': 0.25, 'src': 'fi', 'tgt': 'en',
             },
 
+    'fe_Mixed_CNM':
+            {
+                'net_code': 'CNM.json',
+                'reload_dir': 'FiEnCNMMixed',
+                'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 150,
+                'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.0015, 'warm_updates': 8000,
+                'nnodes': 1, 'nprocs': 8, 'max_toks': 2816,
+                'dropout': 0.25, 'src': 'fi', 'tgt': 'en', 'save_interval_updates': 1500,
+            },
+
+    'fe_Mixed_CNM_Cosine_Dist':
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'FiEnCNMMixedCosine',
+            'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 50,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 8000,
+            'nnodes': 2, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 1500,
+            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':12000, 'src': 'fi', 'tgt': 'en',
+        },
 
     'ef_base_CNM':
         {
@@ -385,6 +401,28 @@ job_pools = {
             'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.0015, 'warm_updates': 8000,
             'nnodes': 1, 'nprocs': 8, 'max_toks': 3072,
             'dropout': 0.25,
+        },
+
+    'ef_Mixed_CNM':
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'EnFiCNMMixed',
+            'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 150,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.0015, 'warm_updates': 8000,
+            'nnodes': 1, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'save_interval_updates': 1500,
+
+        },
+
+    'ef_Mixed_CNM_Cosine_Dist':
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'EnFiCNMMixedCosine',
+            'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 5,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 8000,
+            'nnodes': 2, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 500,
+            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':12000,
         },
 
     'fe_base_CNM':
@@ -432,6 +470,31 @@ job_pools = {
         {
             'reload_dir': 'FiEnBaseSc3', 'dataset': 'wmt19.2nd_l2r.tokenized.en-fi.joined ', 'log_interval': 250, 'save_interval_updates': 1500, 'src': 'fi', 'tgt': 'en',
         },
+
+    'fe_lr_finetune':
+        {
+            'reload_dir': 'FiEnFinalFinetune', 'dataset': 'wmt19.spc2.tokenized.en-fi.joined ', 'log_interval': 150, 'src': 'fi', 'tgt': 'en',
+        },
+
+    'ef_lr_finetune':
+        {
+            'reload_dir': 'EnFiFinalFinetune', 'dataset': 'wmt19.spc2.tokenized.en-fi.joined ', 'log_interval': 150,
+        },
+
+    'fe_rl_finetune':
+        {
+            'reload_dir': 'FiEnR2LFinalFinetune', 'dataset': 'wmt19.spc2.tokenized.en-fi.joined ', 'log_interval': 150, 'src': 'fi', 'tgt': 'en', 'r2l': True,
+        },
+
+    'ef_rl_finetune':
+        {
+            'reload_dir': 'EnFiR2LFinalFinetune', 'dataset': 'wmt19.spc2.tokenized.en-fi.joined ', 'log_interval': 150, 'r2l': True,
+        },
+
+    'fe_ef2fe5_finetune':
+        {
+            'reload_dir': 'FiEnef2fe5FinalFinetune', 'dataset': 'wmt19.spc2.tokenized.en-fi.joined ', 'log_interval': 150, 'src': 'fi', 'tgt': 'en', 'save_interval_updates': 100,
+        },
 }
 
 def getJobConfigs(name = "", job_mode = JobMode.TRAIN, **kwargs):
@@ -460,22 +523,22 @@ def submit():
         'cluster': 'sc3',
         'sample_batch_size': 5120,
         'update_code': False,
-        'initial_model': "checkpoint100.pt",
+        'initial_model': "checkpoint_71_42500.pt",
         'gen_alpha': 1.2,
-        'gen_subset': 'wmt17',
+        'gen_subset': 'wmt19',
         'sample_source_file': None,
-        'sdp': "train.mono.filtered.bpe.1st_round.small"
+        'sdp': "wmt19.train.mono.final_30000000"
     }
 
-    job_name = "fe_bt1_rerun"
+    job_name = "ef_Mixed_CNM_Cosine_Dist"
     job_mode = JobMode.TEST
 
     if job_mode is not JobMode.SAMPLE:
         job_args = getJobConfigs(job_name, job_mode, **specific_args)
         post(**job_args)
     else:
-        NPieces = 20
-        for i in range(0, NPieces, 1):
+        NPieces = 30
+        for i in range(1, NPieces, 2):
             first_char = chr(ord('a') + i // 26)
             second_char = chr(ord('a') + i % 26)
             datapart = first_char + second_char

@@ -31,7 +31,7 @@ def main(args):
     if args.max_tokens is None and args.max_sentences is None:
         args.max_tokens = 12000
     print(args)
-
+    
     use_cuda = torch.cuda.is_available() and not args.cpu
 
     # Load dataset splits
@@ -39,8 +39,7 @@ def main(args):
 
     # Load ensemble
     print('| loading model(s) from {}'.format(args.path))
-    models, _ = utils.load_ensemble_for_inference(args.path.split('::'), task,
-                                                  model_arg_overrides=eval(args.model_overrides))
+    models, _ = utils.load_ensemble_for_inference(args.path.split('::'), task, model_arg_overrides=eval(args.model_overrides))
 
     # Optimize ensemble for generation
     for model in models:
@@ -354,8 +353,7 @@ def decode_from_file(models, task, args, use_cuda, source_filename=None,
 
         num_sentences += 1
         if args.quiet and num_sentences % 5000 == 0:
-            print("| {} / {} sentences decoded ({}), time: {:.3f}s".format(num_sentences, len(sorted_inputs),
-                                                                           len(decodes), time.perf_counter() - start))
+            print("| {} / {} sentences decoded ({}), time: {:.3f}s".format(num_sentences, len(sorted_inputs), len(decodes), time.perf_counter() - start))
 
     used_time = time.perf_counter() - start
     print("| Used time:" + repr(used_time))
@@ -367,13 +365,9 @@ def decode_from_file(models, task, args, use_cuda, source_filename=None,
         # print(sids)
         for index in range(len(sorted_inputs)):
             try:
-                outfile.write("{}{}".format(
-                    eval_scores[sorted_keys[index]] if args.score_reference else decodes[sorted_keys[index]],
-                    args.delimiter))
+                outfile.write("{}{}".format(eval_scores[sorted_keys[index]] if args.score_reference else decodes[sorted_keys[index]] , args.delimiter))
             except:
-                outfile.write("{}{}".format(
-                    eval_scores[sorted_keys[index]] if args.score_reference else decodes[sorted_keys[index]].encode(
-                        'utf-8'), args.delimiter))
+                outfile.write("{}{}".format(eval_scores[sorted_keys[index]] if args.score_reference else decodes[sorted_keys[index]].encode('utf-8'), args.delimiter))
         outfile.close()
 
     print('| Translated {} sentences ({} tokens) in {:.1f}s ({:.2f} sentences/s, {:.2f} tokens/s)'.format(
@@ -440,7 +434,6 @@ def _decode_filename(base_filename, args):
         idx=".index" if args.decode_to_index else "")
     '''
 
-
 def add_user_extra_generation_args(parser, seq=False):
     group = parser.add_argument_group('Extra generation args')
     # seq_translate
@@ -454,7 +447,7 @@ def add_user_extra_generation_args(parser, seq=False):
     # decode from file
     group.add_argument('--decode-source-file', default=None, type=str, metavar='FILE')
     group.add_argument('--decode-target-file', default=None, type=str, metavar='FILE')
-    # group.add_argument('--decode-output-file', default=None, type=str, metavar='FILE')
+    #group.add_argument('--decode-output-file', default=None, type=str, metavar='FILE')
     group.add_argument('--decode-to-file', action="store_true")
     group.add_argument("--decode-to-index", action="store_true")
     group.add_argument('--delimiter', default="\n", type=str)
