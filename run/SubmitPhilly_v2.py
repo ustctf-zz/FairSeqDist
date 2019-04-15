@@ -330,15 +330,26 @@ job_pools = {
             'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':12000,
         },
 
-    'fe_base_CNM_Cosine':
+    'ef_R2L_base_CNM_Cosine':
         {
             'net_code': 'CNM.json',
-            'reload_dir': 'EnFiCNMBaseCosine',
+            'reload_dir': 'EnFiR2LCNMBaseCosine',
             'dataset': 'wmt19.tokenized.en-fi.joined', 'log_interval': 100,
-            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 8000,
-            'nnodes': 1, 'nprocs': 8, 'max_toks': 3072,
-            'dropout': 0.3, 'src': 'fi', 'tgt': 'en',
-            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':12000,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 6000,
+            'nnodes': 2, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25,
+            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':10000, 'r2l': True,
+        },
+
+    'fe_R2L_base_CNM_Cosine':
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'FiEnR2LCNMBaseCosine',
+            'dataset': 'wmt19.tokenized.en-fi.joined', 'log_interval': 100,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 6000,
+            'nnodes': 2, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'src': 'fi', 'tgt': 'en',
+            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':10000, 'r2l': True,
         },
 
     'fe_BT1_CNM':
@@ -376,11 +387,11 @@ job_pools = {
         {
             'net_code': 'CNM.json',
             'reload_dir': 'FiEnCNMMixedCosine',
-            'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 50,
+            'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 100,
             'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 8000,
-            'nnodes': 2, 'nprocs': 8, 'max_toks': 2560,
-            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 1500,
-            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':12000, 'src': 'fi', 'tgt': 'en',
+            'nnodes': 1, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 500,
+            'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':10000, 'src': 'fi', 'tgt': 'en',
         },
 
     'ef_base_CNM':
@@ -420,7 +431,7 @@ job_pools = {
             'reload_dir': 'EnFiCNMMixedCosine',
             'dataset': 'wmt19.CNM_mixed.tokenized.en-fi.joined', 'log_interval': 5,
             'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 1e-7, 'warm_updates': 8000,
-            'nnodes': 2, 'nprocs': 8, 'max_toks': 2560,
+            'nnodes': 1, 'nprocs': 8, 'max_toks': 2560,
             'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 500,
             'lr_scheduler': 'cosine', 'max_lr':0.0015, 'cosine_period':12000,
         },
@@ -495,6 +506,37 @@ job_pools = {
         {
             'reload_dir': 'FiEnef2fe5FinalFinetune', 'dataset': 'wmt19.spc2.tokenized.en-fi.joined ', 'log_interval': 150, 'src': 'fi', 'tgt': 'en', 'save_interval_updates': 100,
         },
+
+    'ef_Mixed_CNM_Cosine_Dist_Finetune': # from checkpoint_71_43500.pt
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'EnFiCNMMixedCosineFinetune',
+            'dataset': 'wmt19.spc2.tokenized.en-fi.joined', 'log_interval': 5,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.0015, 'warm_updates': 8000,
+            'nnodes': 1, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 150,
+        },
+
+    'ef_Mixed_CNM_Cosine_Dist_Finetune2': # from checkpoint_71_43500.pt
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'EnFiCNMMixedCosineFinetune2',
+            'dataset': 'wmt19.spc2.tokenized.en-fi.joined', 'log_interval': 5,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.0015, 'warm_updates': 8000,
+            'nnodes': 1, 'nprocs': 8, 'max_toks': 3072,
+            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 100,
+        },
+
+    'fe_Mixed_CNM_Cosine_Dist_Finetune': # from checkpoint_81_43500.pt
+        {
+            'net_code': 'CNM.json',
+            'reload_dir': 'FiEnCNMMixedCosineFinetune',
+            'dataset': 'wmt19.spc2.tokenized.en-fi.joined', 'log_interval': 50,
+            'blob': True, 'arch': 'nas_transformer_wmt_en_de_big', 'lr': 0.001, 'warm_updates': 8000,
+            'nnodes': 1, 'nprocs': 8, 'max_toks': 2560,
+            'dropout': 0.25, 'save_interval': 1, 'save_interval_updates': 100,
+            'src': 'fi', 'tgt': 'en',
+        },
 }
 
 def getJobConfigs(name = "", job_mode = JobMode.TRAIN, **kwargs):
@@ -523,14 +565,14 @@ def submit():
         'cluster': 'sc3',
         'sample_batch_size': 5120,
         'update_code': False,
-        'initial_model': "checkpoint_71_42500.pt",
+        'initial_model': "checkpoint85.pt",
         'gen_alpha': 1.2,
         'gen_subset': 'wmt19',
         'sample_source_file': None,
         'sdp': "wmt19.train.mono.final_30000000"
     }
 
-    job_name = "ef_Mixed_CNM_Cosine_Dist"
+    job_name = "ef_rl_btkd2"
     job_mode = JobMode.TEST
 
     if job_mode is not JobMode.SAMPLE:
@@ -545,7 +587,6 @@ def submit():
             specific_args['sample_source_file'] = 'part.{}'.format(datapart)
             job_args = getJobConfigs(job_name, job_mode, **specific_args)
             post(**job_args)
-            #print(i, datapart)
 
 
 if __name__=='__main__':
